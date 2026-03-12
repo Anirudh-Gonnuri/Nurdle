@@ -22,7 +22,8 @@
   // ================================================================
   var MAX_GUESSES = 6;
   var NUM_DIGITS = 3;
-  var EPOCH = new Date(2024, 0, 1);
+  // The game starts counting days from this date (Day 1 is the day AFTER this date)
+  var EPOCH = new Date(2026, 2, 11); // March 11, 2026 (Month is 0-indexed)
 
   // ================================================================
   //  GAME STATE
@@ -1057,9 +1058,9 @@
     var grid = '';
     game.guesses.forEach(function (g) {
       var i;
-      for (i = 0; i < g.correct; i++) grid += 'G';
-      for (i = 0; i < g.wrongPos; i++) grid += 'Y';
-      for (i = 0; i < NUM_DIGITS - g.correct - g.wrongPos; i++) grid += '-';
+      for (i = 0; i < g.correct; i++) grid += '🟢';
+      for (i = 0; i < g.wrongPos; i++) grid += '🟡';
+      for (i = 0; i < NUM_DIGITS - g.correct - g.wrongPos; i++) grid += '⚫';
       grid += '\n';
     });
     return 'Nurdle ' + num + ' ' + result + '\n\n' + grid.trim();
