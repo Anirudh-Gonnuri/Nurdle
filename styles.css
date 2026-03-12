@@ -8,19 +8,19 @@
 }
 
 :root {
-  --bg: #111118;
-  --surface: #1a1a28;
-  --border-empty: #2d2d3f;
-  --border-filled: #4a4a60;
-  --border-submitted: #2d2d3f;
-  --green: #22c55e;
-  --yellow: #eab308;
-  --absent: #3a3a4c;
-  --key-bg: #3a3a50;
-  --key-text: #e2e2e8;
-  --text: #f0f0f5;
-  --text-dim: #6b6b80;
-  --modal-bg: #1e1e30;
+  --bg: #121213;
+  --surface: #121213;
+  --border-empty: #3a3a3c;
+  --border-filled: #565758;
+  --border-submitted: #3a3a3c;
+  --green: #538d4e;
+  --yellow: #b59f3b;
+  --absent: #3a3a3c;
+  --key-bg: #818384;
+  --key-text: #ffffff;
+  --text: #ffffff;
+  --text-dim: #d7dadc;
+  --modal-bg: #121213;
   --accent: #8b5cf6;
   --red: #ef4444;
 }
@@ -31,7 +31,7 @@ html, body {
 }
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   display: flex;
@@ -68,13 +68,11 @@ header {
 }
 
 header h1 {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 6px;
-  background: linear-gradient(135deg, var(--green), var(--yellow));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: 'NYT Karnak', 'KarnakPro-CondensedBlack', Georgia, serif;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: var(--text);
 }
 
 .hdr-btn {
@@ -204,6 +202,8 @@ header h1 {
   justify-content: center;
   padding: 4px 0;
   overflow: hidden;
+  margin: 0 auto;
+  width: 100%;
 }
 
 #board {
@@ -215,7 +215,9 @@ header h1 {
 .row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  position: relative;
 }
 
 .cells {
@@ -227,11 +229,10 @@ header h1 {
   width: 62px;
   height: 62px;
   border: 2px solid var(--border-empty);
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text);
   background: transparent;
@@ -241,7 +242,7 @@ header h1 {
 
 .cell.filled {
   border-color: var(--border-filled);
-  animation: cellPop 0.12s ease;
+  animation: cellPop 0.1s ease-in-out;
 }
 
 .cell.active-row {
@@ -251,11 +252,12 @@ header h1 {
 .cell.submitted {
   background: var(--surface);
   border-color: var(--border-submitted);
+  color: #ffffff;
 }
 
 .cell.won {
   border-color: var(--green);
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--green);
 }
 
 /* ===== FEEDBACK DOTS ===== */
@@ -267,6 +269,8 @@ header h1 {
   width: 54px;
   min-width: 54px;
   justify-content: center;
+  position: absolute;
+  right: -64px;
 }
 
 .dot {
@@ -284,12 +288,10 @@ header h1 {
 
 .dot.correct {
   background: var(--green);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
 .dot.present {
   background: var(--yellow);
-  box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
 }
 
 .dot.absent-dot {
@@ -464,54 +466,54 @@ header h1 {
 }
 
 .key {
-  height: 52px;
+  height: 58px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--key-bg);
   color: var(--key-text);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
   position: relative;
   user-select: none;
   -webkit-user-select: none;
 }
 
 .key:active {
-  transform: scale(0.93);
-  background: #2a2a3e;
+  transform: scale(0.95);
+  opacity: 0.8;
 }
 
 .key.fn {
   font-size: 16px;
   font-weight: 700;
-  background: #2d2d42;
+  background: var(--key-bg);
 }
 
 .key.submit-key {
-  background: var(--green);
+  background: var(--key-bg);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
 }
 
 .key.submit-key:active {
-  background: #16a34a;
+  opacity: 0.8;
 }
 
 .key.key-absent {
-  background: #1a1a24;
-  color: #3a3a4c;
+  background: var(--absent);
+  color: var(--key-text);
 }
 
 .key.key-eliminated {
-  background: #1a1a24;
-  color: #3a3a4c;
-  text-decoration: line-through;
+  background: var(--absent);
+  color: var(--text-dim);
+  opacity: 0.5;
 }
 
 .key.long-pressing {

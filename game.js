@@ -8,13 +8,13 @@
   //  Daily and Practice modes work without Firebase.
   // ================================================================
   var FIREBASE_CONFIG = {
-    apiKey: '',
-    authDomain: '',
-    databaseURL: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: ''
+    apiKey: "AIzaSyAwWzu1S6Uj4xpxCR0IQAv92kBI3xUgL5U",
+    authDomain: "nurdle-aa83c.firebaseapp.com",
+    databaseURL: "https://nurdle-aa83c-default-rtdb.firebaseio.com",
+    projectId: "nurdle-aa83c",
+    storageBucket: "nurdle-aa83c.firebasestorage.app",
+    messagingSenderId: "838521593900",
+    appId: "1:838521593900:web:73ca45a9fa24dd3e0b7189"
   };
 
   // ================================================================
