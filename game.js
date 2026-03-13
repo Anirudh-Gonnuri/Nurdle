@@ -300,14 +300,18 @@
           // Yield turn to opponent
           battle.roomRef.update({ turn: battle.oppSlot });
         } else {
-          updateStats(true, game.guesses.length);
-          if (game.mode === 'daily') saveDaily();
+          if (game.mode === 'daily') {
+            updateStats(true, game.guesses.length);
+            saveDaily();
+          }
           setTimeout(showResult, 1800);
         }
       } else if (game.currentRow >= MAX_GUESSES && game.mode !== 'battle') {
         game.gameOver = true;
-        updateStats(false, game.guesses.length);
-        if (game.mode === 'daily') saveDaily();
+        if (game.mode === 'daily') {
+          updateStats(false, game.guesses.length);
+          saveDaily();
+        }
         setTimeout(showResult, 1000);
       } else {
         if (isBattle) {
