@@ -302,26 +302,20 @@
           if (game.mode === 'daily') saveDaily();
           setTimeout(showResult, 1800);
         }
-      } else if (game.currentRow >= MAX_GUESSES) {
+      } else if (game.currentRow >= MAX_GUESSES && game.mode !== 'battle') {
         game.gameOver = true;
-
-        if (isBattle) {
-          syncBattleProgress();
-          renderBattleTracker();
-          if (battle.oppDone) {
-            endBattle(battle.oppSolved ? 'lose' : 'draw');
-          }
-        } else {
-          updateStats(false, game.guesses.length);
-          if (game.mode === 'daily') saveDaily();
-          setTimeout(showResult, 1000);
-        }
+        updateStats(false, game.guesses.length);
+        if (game.mode === 'daily') saveDaily();
+        setTimeout(showResult, 1000);
       } else {
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
           // Yield turn to opponent
           battle.roomRef.update({ turn: battle.oppSlot });
+        }
+        if (game.mode === 'battle') {
+          ensureRowExists(game.currentRow);
         }
         renderCurrentRow();
         if (game.mode === 'daily') saveDaily();
@@ -637,7 +631,8 @@
 
   function renderTrackerDots(container, guessCount, solved, failed) {
     container.innerHTML = '';
-    for (var i = 0; i < MAX_GUESSES; i++) {
+    var dotCount = game.mode === 'battle' ? Math.max(MAX_GUESSES, guessCount + (!solved && !failed ? 1 : 0)) : MAX_GUESSES;
+    for (var i = 0; i < dotCount; i++) {
       var dot = document.createElement('div');
       dot.className = 'tracker-dot';
       if (i < guessCount) {
@@ -692,34 +687,43 @@
   // ================================================================
   //  RENDERING
   // ================================================================
+  function ensureRowExists(r) {
+    if (document.getElementById('row-' + r)) return;
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.id = 'row-' + r;
+
+    var cells = document.createElement('div');
+    cells.className = 'cells';
+    for (var c = 0; c < NUM_DIGITS; c++) {
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = 'cell-' + r + '-' + c;
+      cells.appendChild(cell);
+    }
+
+    var fb = document.createElement('div');
+    fb.className = 'feedback';
+    for (var d = 0; d < NUM_DIGITS; d++) {
+      var dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.id = 'dot-' + r + '-' + d;
+      fb.appendChild(dot);
+    }
+
+    row.appendChild(cells);
+    row.appendChild(fb);
+    dom.board.appendChild(row);
+    if (dom.board.parentElement.scrollHeight > dom.board.parentElement.clientHeight) {
+      dom.board.parentElement.scrollTop = dom.board.parentElement.scrollHeight;
+    }
+  }
+
   function buildBoard() {
     dom.board.innerHTML = '';
-    for (var r = 0; r < MAX_GUESSES; r++) {
-      var row = document.createElement('div');
-      row.className = 'row';
-      row.id = 'row-' + r;
-
-      var cells = document.createElement('div');
-      cells.className = 'cells';
-      for (var c = 0; c < NUM_DIGITS; c++) {
-        var cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.id = 'cell-' + r + '-' + c;
-        cells.appendChild(cell);
-      }
-
-      var fb = document.createElement('div');
-      fb.className = 'feedback';
-      for (var d = 0; d < NUM_DIGITS; d++) {
-        var dot = document.createElement('div');
-        dot.className = 'dot';
-        dot.id = 'dot-' + r + '-' + d;
-        fb.appendChild(dot);
-      }
-
-      row.appendChild(cells);
-      row.appendChild(fb);
-      dom.board.appendChild(row);
+    var targetRows = game.mode === 'battle' ? Math.max(MAX_GUESSES, (game.guesses ? game.guesses.length : 0) + 1) : MAX_GUESSES;
+    for (var r = 0; r < targetRows; r++) {
+      ensureRowExists(r);
     }
   }
 
@@ -801,7 +805,7 @@
 
   function renderCurrentRow() {
     var r = game.currentRow;
-    if (r >= MAX_GUESSES) return;
+    if (r >= MAX_GUESSES && game.mode !== 'battle') return;
     for (var c = 0; c < NUM_DIGITS; c++) {
       var cell = getCellEl(r, c);
       if (!cell) continue;
@@ -1054,8 +1058,8 @@
       digitHtml += '<div class="result-digit rb">' + d + '</div>';
     });
 
-    var myText = game.won ? game.guesses.length + '/6' : 'X/6';
-    var oppText = battle.oppSolved ? battle.oppGuesses + '/6' : 'X/6';
+    var myText = game.won ? game.guesses.length : 'X';
+    var oppText = battle.oppSolved ? battle.oppGuesses : 'X';
     var myScoreClass = result === 'win' ? 'win-score' : (result === 'lose' ? 'lose-score' : '');
     var oppScoreClass = result === 'lose' ? 'win-score' : (result === 'win' ? 'lose-score' : '');
 
