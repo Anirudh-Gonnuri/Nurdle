@@ -1022,7 +1022,7 @@
       '<h3>Modes</h3>' +
       '<p><strong>Daily</strong> — Same number for everyone. Resets at midnight.</p>' +
       '<p style="margin-top:4px"><strong>Practice</strong> — Unlimited random puzzles.</p>' +
-      '<p style="margin-top:4px"><strong>Battle</strong> — Race a friend in real-time.</p>' +
+      '<p style="margin-top:4px"><strong>Battle</strong> — Real-time multiplayer. Create or join a room, pick a secret number for your opponent, and take turns guessing. First to solve wins.</p>' +
       '<p style="margin-top:10px;font-size:13px;color:var(--text-dim)"><strong>Tip:</strong> Long-press a key to cross it out as scratch work.</p>' +
       '</div>' +
       '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
