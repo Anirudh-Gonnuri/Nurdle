@@ -19,7 +19,7 @@
   // ================================================================
   var MAX_GUESSES = 6;
   var NUM_DIGITS = 3;
-  var EPOCH = new Date(2026, 2, 13);
+  var EPOCH = new Date(2026, 2, 14);
 
   // ================================================================
   //  GAME STATE
@@ -54,7 +54,6 @@
     confetti: document.getElementById('confetti'),
     overlay: document.getElementById('overlay'),
     modal: document.getElementById('modal'),
-    puzzleNum: document.getElementById('puzzleNum'),
     helpBtn: document.getElementById('helpBtn'),
     statsBtn: document.getElementById('statsBtn'),
     dailyBtn: document.getElementById('dailyBtn'),
@@ -81,7 +80,7 @@
 
   // Helper function to check if unlimited mode is active
   function isUnlimited() {
-    return game.mode === 'practice' && dom.unlimitedToggle.checked;
+    return (game.mode === 'practice' || game.mode === 'battle') && dom.unlimitedToggle.checked;
   }
 
 
@@ -101,7 +100,7 @@
   function getPuzzleNumber() {
     var today = new Date();
     today.setHours(0, 0, 0, 0);
-    return Math.floor((today - EPOCH) / 86400000);
+    return Math.floor((today - EPOCH) / 86400000) + 1;
   }
 
   function generateSecret(seed) {
@@ -169,7 +168,7 @@
     dom.battleCountdown.classList.toggle('hidden', view !== 'countdown');
     dom.keypadContainer.classList.toggle('hidden', view !== 'game' && view !== 'select-secret');
     dom.battleTracker.classList.toggle('hidden', !(view === 'game' && battle.active));
-    dom.practiceOptions.classList.toggle('hidden', game.mode !== 'practice');
+    dom.practiceOptions.classList.toggle('hidden', game.mode !== 'practice' && game.mode !== 'battle');
   }
 
   function updateModeButtons(mode) {
@@ -373,6 +372,7 @@
   }
 
   function showBattleLobby() {
+    game.mode = 'battle';
     updateModeButtons('battle');
     dom.roomCodeInput.value = '';
     showView('lobby');
@@ -392,6 +392,7 @@
       secret: secret,
       status: 'waiting',
       createdAt: firebase.database.ServerValue.TIMESTAMP,
+      firstTurn: 'p1',
       p1: { id: battle.playerId, guesses: 0, done: false, solved: false },
       p2: null,
       winner: null
@@ -495,10 +496,11 @@
 
         var secretToGuess = data[battle.oppSlot + 'Secret'].split('').map(Number);
 
-        battle.myTurn = (battle.mySlot === 'p1');
+        var firstPlayer = data.firstTurn || 'p1';
+        battle.myTurn = (battle.mySlot === firstPlayer);
 
         if (battle.mySlot === 'p1' && !data.turn) {
-          battle.roomRef.update({ turn: 'p1' });
+          battle.roomRef.update({ turn: firstPlayer });
         }
 
         startBattleGame(secretToGuess);
@@ -598,6 +600,9 @@
     battleResultShown = true;
     game.gameOver = true;
 
+    for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
+    renderKeypad();
+
     setTimeout(function () {
       showBattleResultModal(result);
     }, result === 'win' ? 400 : 200);
@@ -625,21 +630,28 @@
       backToBattleLobby();
       return;
     }
+    battleResultShown = false;
     battle.roomRef.child(battle.mySlot).update({
       guesses: 0,
       solved: false,
       done: false
     });
     if (battle.mySlot === 'p1') {
-      battle.roomRef.update({
-        p1Secret: null,
-        p2Secret: null,
-        winner: null,
-        turn: null
+      battle.roomRef.child('firstTurn').once('value', function (snap) {
+        var lastFirst = snap.val() || 'p1';
+        var nextFirst = lastFirst === 'p1' ? 'p2' : 'p1';
+        battle.roomRef.update({
+          p1Secret: null,
+          p2Secret: null,
+          winner: null,
+          turn: null,
+          firstTurn: nextFirst
+        });
+        startSecretSelection();
       });
+    } else {
+      startSecretSelection();
     }
-    battleResultShown = false;
-    startSecretSelection();
   };
 
   function renderBattleTracker() {
@@ -722,6 +734,9 @@
       fb.appendChild(dot);
     }
 
+    var spacer = document.createElement('div');
+    spacer.className = 'row-spacer';
+    row.appendChild(spacer);
     row.appendChild(cells);
     row.appendChild(fb);
     dom.board.appendChild(row);
@@ -902,7 +917,6 @@
     });
     renderCurrentRow();
     renderKeypad();
-    dom.puzzleNum.textContent = '#' + getPuzzleNumber();
   }
 
   // ================================================================
@@ -1057,6 +1071,10 @@
         '<div class="countdown">Next Nurdle<br><span id="countdown-timer">--:--:--</span></div>';
     }
 
+    var puzzleNumHtml = game.mode === 'daily'
+      ? '<p style="text-align:center;font-size:11px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">Nurdle #' + game.puzzleNum + '</p>'
+      : '';
+
     var buttons = '';
     if (won || game.mode === 'daily') {
       buttons += '<button class="modal-btn btn-share" onclick="shareResult()">' +
@@ -1072,6 +1090,7 @@
       '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
       '</button>' +
       '<div class="modal-title">' + title + '</div>' +
+      puzzleNumHtml +
       '<div class="result-number">' + digitHtml + '</div>' +
       '<p style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:4px">' + subtitle + '</p>' +
       nextPuzzle + buttons
@@ -1304,6 +1323,7 @@
       if (e.key === 'Escape') closeModal();
       return;
     }
+    if (document.activeElement === dom.roomCodeInput) return;
     if (e.key >= '0' && e.key <= '9') {
       inputDigit(parseInt(e.key, 10));
     } else if (e.key === 'Backspace' || e.key === 'Delete') {

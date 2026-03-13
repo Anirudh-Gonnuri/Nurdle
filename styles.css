@@ -473,6 +473,12 @@ header h1 {
   height: 100%;
 }
 
+.row-spacer {
+  width: 62px;
+  min-width: 62px;
+  flex-shrink: 0;
+}
+
 .dot {
   width: 14px;
   height: 14px;
@@ -1207,6 +1213,11 @@ header h1 {
   .feedback {
     right: -70px;
     width: 62px;
+  }
+
+  .row-spacer {
+    width: 70px;
+    min-width: 70px;
   }
 
   .dot {
