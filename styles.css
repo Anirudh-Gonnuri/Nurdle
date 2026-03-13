@@ -199,9 +199,11 @@ header h1 {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px 0;
-  overflow: hidden;
+  justify-content: flex-start;
+  flex-direction: column;
+  padding: 12px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   margin: 0 auto;
   width: 100%;
 }

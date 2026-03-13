@@ -37,10 +37,11 @@
     mySlot: null,
     oppSlot: null,
     playerId: getPlayerId(),
-    oppGuesses: 0,
     oppSolved: false,
     oppDone: false,
-    roomRef: null
+    roomRef: null,
+    secretChoosing: false,
+    customSecret: []
   };
 
   var firebaseReady = false;
@@ -72,6 +73,9 @@
     roomCodeDisplay: document.getElementById('roomCodeDisplay'),
     copyCodeBtn: document.getElementById('copyCodeBtn'),
     cancelRoomBtn: document.getElementById('cancelRoomBtn'),
+    battleSelectSecret: document.getElementById('battle-select-secret'),
+    selectNumberDisplay: document.getElementById('selectNumberDisplay'),
+    lockSecretBtn: document.getElementById('lockSecretBtn'),
     countdownBig: document.getElementById('countdownBig'),
     myProgress: document.getElementById('myProgress'),
     oppProgress: document.getElementById('oppProgress')
@@ -157,8 +161,9 @@
     dom.board.classList.toggle('hidden', view !== 'game');
     dom.battleLobby.classList.toggle('hidden', view !== 'lobby');
     dom.battleWaiting.classList.toggle('hidden', view !== 'waiting');
+    dom.battleSelectSecret.classList.toggle('hidden', view !== 'select-secret');
     dom.battleCountdown.classList.toggle('hidden', view !== 'countdown');
-    dom.keypadContainer.classList.toggle('hidden', view !== 'game');
+    dom.keypadContainer.classList.toggle('hidden', view !== 'game' && view !== 'select-secret');
     dom.battleTracker.classList.toggle('hidden', !(view === 'game' && battle.active));
   }
 
@@ -208,6 +213,17 @@
   //  INPUT
   // ================================================================
   function inputDigit(d) {
+    if (battle.secretChoosing) {
+      if (battle.customSecret.length < NUM_DIGITS) {
+        battle.customSecret.push(d);
+        renderSelectMode();
+      }
+      return;
+    }
+    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) {
+      showToast("Waiting for opponent's turn");
+      return;
+    }
     if (game.gameOver || game.currentGuess.length >= NUM_DIGITS) return;
     game.currentGuess.push(d);
     renderCurrentRow();
@@ -220,12 +236,21 @@
   }
 
   function deleteDigit() {
+    if (battle.secretChoosing) {
+      if (battle.customSecret.length > 0) {
+        battle.customSecret.pop();
+        renderSelectMode();
+      }
+      return;
+    }
+    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) return;
     if (game.gameOver || game.currentGuess.length === 0) return;
     game.currentGuess.pop();
     renderCurrentRow();
   }
 
   function submitGuess() {
+    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) return;
     if (game.gameOver) return;
     if (game.currentGuess.length < NUM_DIGITS) {
       shakeRow(game.currentRow);
@@ -270,6 +295,8 @@
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
+          // Yield turn to opponent
+          battle.roomRef.update({ turn: battle.oppSlot });
         } else {
           updateStats(true, game.guesses.length);
           if (game.mode === 'daily') saveDaily();
@@ -293,6 +320,8 @@
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
+          // Yield turn to opponent
+          battle.roomRef.update({ turn: battle.oppSlot });
         }
         renderCurrentRow();
         if (game.mode === 'daily') saveDaily();
@@ -412,7 +441,7 @@
         battle.roomRef = ref;
 
         ref.child('p2').onDisconnect().update({ disconnected: true });
-        startCountdownSequence(room.secret);
+        startSecretSelection();
       });
     }).catch(function () {
       showToast('Error joining room');
@@ -432,43 +461,53 @@
     battle.roomRef.child('status').on('value', function (snap) {
       if (snap.val() === 'playing') {
         battle.roomRef.child('status').off();
-        battle.roomRef.child('secret').once('value').then(function (s) {
-          startCountdownSequence(s.val());
-        });
+        startSecretSelection();
       }
     });
   }
 
-  function startCountdownSequence(secret) {
-    showView('countdown');
-    var el = dom.countdownBig;
-    var count = 3;
+  // (Removed startCountdownSequence to improve UX)
 
-    el.textContent = count;
-    el.className = 'countdown-big';
-    el.style.animation = 'none';
-    void el.offsetWidth;
-    el.style.animation = 'countdownPop 0.7s ease';
+  function startSecretSelection() {
+    battle.secretChoosing = true;
+    battle.customSecret = [];
+    showView('select-secret');
+    renderSelectMode();
+    renderKeypad(); // Ensure keypad is visible and reset
+  }
 
-    var interval = setInterval(function () {
-      count--;
-      if (count > 0) {
-        el.textContent = count;
-        el.className = 'countdown-big';
-        el.style.animation = 'none';
-        void el.offsetWidth;
-        el.style.animation = 'countdownPop 0.7s ease';
-      } else if (count === 0) {
-        el.textContent = 'GO';
-        el.className = 'countdown-big go';
-        el.style.animation = 'none';
-        void el.offsetWidth;
-        el.style.animation = 'countdownPop 0.7s ease';
-      } else {
-        clearInterval(interval);
-        startBattleGame(secret);
+  function renderSelectMode() {
+    var digits = dom.selectNumberDisplay.children;
+    for (var i = 0; i < NUM_DIGITS; i++) {
+      var d = battle.customSecret[i];
+      digits[i].textContent = d !== undefined ? d : '';
+      digits[i].style.borderColor = d !== undefined ? 'var(--accent)' : 'var(--border-empty)';
+    }
+  }
+
+  function listenForBothSecrets() {
+    battle.roomRef.on('value', function (snap) {
+      var data = snap.val();
+      if (!data) return;
+      
+      // If both p1Secret and p2Secret exist, we can start the game!
+      if (data.p1Secret && data.p2Secret) {
+        battle.roomRef.off('value'); // stop listening to the root
+
+        // We guess the secret the opponent wrote for us
+        var secretToGuess = data[battle.oppSlot + 'Secret'].split('').map(Number);
+        
+        // The player who created the room (p1) goes first
+        battle.myTurn = (battle.mySlot === 'p1');
+        
+        // Update database to specify turn (only p1 needs to do this to avoid race conditions)
+        if (battle.mySlot === 'p1' && !data.turn) {
+          battle.roomRef.update({ turn: 'p1' });
+        }
+
+        startBattleGame(secretToGuess);
       }
-    }, 800);
+    });
   }
 
   function startBattleGame(secret) {
@@ -538,6 +577,14 @@
       }
     });
 
+    // Listen for turn changes
+    battle.roomRef.child('turn').on('value', function (snap) {
+      var whoseTurn = snap.val();
+      if (!whoseTurn) return;
+      battle.myTurn = (whoseTurn === battle.mySlot);
+      renderBattleTracker();
+    });
+
     // Listen for winner
     battle.roomRef.child('winner').on('value', function (snap) {
       var winner = snap.val();
@@ -603,6 +650,42 @@
         }
       }
       container.appendChild(dot);
+    }
+
+    // Turn indicator below tracker
+    var turnBanner = document.getElementById('battleTurnBanner');
+    if (!turnBanner) {
+      turnBanner = document.createElement('div');
+      turnBanner.id = 'battleTurnBanner';
+      turnBanner.style.textAlign = 'center';
+      turnBanner.style.padding = '8px';
+      turnBanner.style.fontSize = '12px';
+      turnBanner.style.fontWeight = '700';
+      turnBanner.style.letterSpacing = '1px';
+      turnBanner.style.marginTop = '10px';
+      turnBanner.style.borderRadius = '4px';
+      dom.battleTracker.appendChild(turnBanner);
+    }
+
+    if (battle.active && !game.gameOver) {
+      if (battle.myTurn) {
+        turnBanner.textContent = 'YOUR TURN';
+        turnBanner.style.backgroundColor = 'var(--accent)';
+        turnBanner.style.color = '#fff';
+        dom.keypad.style.opacity = '1';
+        dom.keypad.style.pointerEvents = 'auto'; // unlock keypad
+      } else {
+        turnBanner.textContent = 'OPPONENT\'S TURN...';
+        turnBanner.style.backgroundColor = 'var(--surface)';
+        turnBanner.style.color = 'var(--text-dim)';
+        dom.keypad.style.opacity = '0.5';
+        dom.keypad.style.pointerEvents = 'none'; // lock keypad
+      }
+    } else {
+      turnBanner.innerHTML = '&nbsp;';
+      turnBanner.style.backgroundColor = 'transparent';
+      dom.keypad.style.opacity = '1';
+      dom.keypad.style.pointerEvents = 'auto';
     }
   }
 
@@ -1231,6 +1314,23 @@
         showToast('Code copied');
       });
     }
+  });
+
+  dom.lockSecretBtn.addEventListener('click', function () {
+    if (battle.customSecret.length < NUM_DIGITS) {
+      showToast('Enter ' + NUM_DIGITS + ' digits');
+      return;
+    }
+    battle.secretChoosing = false;
+    dom.lockSecretBtn.textContent = 'WAITING...';
+    dom.lockSecretBtn.disabled = true;
+
+    // Send our chosen secret up to the room
+    var myData = {};
+    myData[battle.mySlot + 'Secret'] = battle.customSecret.join('');
+    battle.roomRef.update(myData).then(function() {
+      listenForBothSecrets();
+    });
   });
 
   dom.roomCodeInput.addEventListener('keydown', function (e) {
