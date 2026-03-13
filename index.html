@@ -6,6 +6,7 @@
   <meta name="description" content="Nurdle - A daily number guessing game. Guess the 3-digit number in 6 tries.">
   <meta name="theme-color" content="#121213">
   <title>Nurdle</title>
+  <link rel="icon" href="logo.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +40,15 @@
       <button class="mode-btn" data-mode="practice" id="practiceBtn">Practice</button>
       <button class="mode-btn" data-mode="battle" id="battleBtn">Battle</button>
     </nav>
-
+    <div id="practice-options" class="practice-options hidden">
+      <label class="toggle-label">
+        <span>Unlimited guesses</span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="unlimitedToggle">
+          <span class="toggle-slider"></span>
+        </div>
+      </label>
+    </div>
     <div id="battle-tracker" class="hidden">
       <div class="tracker-player">
         <div class="tracker-name">YOU</div>

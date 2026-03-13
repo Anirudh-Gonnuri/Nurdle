@@ -46,6 +46,8 @@
   //  DOM REFERENCES
   // ================================================================
   var dom = {
+    practiceOptions: document.getElementById('practice-options'),
+    unlimitedToggle: document.getElementById('unlimitedToggle'),
     board: document.getElementById('board'),
     keypad: document.getElementById('keypad'),
     toasts: document.getElementById('toast-container'),
@@ -76,6 +78,12 @@
     myProgress: document.getElementById('myProgress'),
     oppProgress: document.getElementById('oppProgress')
   };
+
+  // Helper function to check if unlimited mode is active
+  function isUnlimited() {
+    return game.mode === 'practice' && dom.unlimitedToggle.checked;
+  }
+
 
   // ================================================================
   //  SEEDED RANDOM
@@ -161,6 +169,7 @@
     dom.battleCountdown.classList.toggle('hidden', view !== 'countdown');
     dom.keypadContainer.classList.toggle('hidden', view !== 'game' && view !== 'select-secret');
     dom.battleTracker.classList.toggle('hidden', !(view === 'game' && battle.active));
+    dom.practiceOptions.classList.toggle('hidden', game.mode !== 'practice');
   }
 
   function updateModeButtons(mode) {
@@ -280,6 +289,7 @@
     renderSubmittedRow(row, entry);
     animateFeedback(row, result, function () {
       var isBattle = game.mode === 'battle' && battle.active;
+      var unlimited = isUnlimited();
 
       if (result.correct === NUM_DIGITS) {
         game.won = true;
@@ -297,7 +307,7 @@
           }
           setTimeout(showResult, 1800);
         }
-      } else if (game.currentRow >= MAX_GUESSES && game.mode !== 'battle') {
+      } else if (game.currentRow >= MAX_GUESSES && !unlimited && game.mode !== 'battle') {
         game.gameOver = true;
         if (game.mode === 'daily') {
           updateStats(false, game.guesses.length);
@@ -310,7 +320,7 @@
           renderBattleTracker();
           battle.roomRef.update({ turn: battle.oppSlot });
         }
-        if (game.mode === 'battle') {
+        if (game.mode === 'battle' || unlimited) {
           ensureRowExists(game.currentRow);
         }
         renderCurrentRow();
@@ -715,9 +725,11 @@
     row.appendChild(cells);
     row.appendChild(fb);
     dom.board.appendChild(row);
-    if (dom.board.parentElement.scrollHeight > dom.board.parentElement.clientHeight) {
-      dom.board.parentElement.scrollTop = dom.board.parentElement.scrollHeight;
-    }
+
+    // Auto-scroll to show the new row
+    setTimeout(function () {
+      dom.board.scrollTop = dom.board.scrollHeight;
+    }, 50);
   }
 
   function buildBoard() {
@@ -806,7 +818,7 @@
 
   function renderCurrentRow() {
     var r = game.currentRow;
-    if (r >= MAX_GUESSES && game.mode !== 'battle') return;
+    if (r >= MAX_GUESSES && !isUnlimited() && game.mode !== 'battle') return;
     for (var c = 0; c < NUM_DIGITS; c++) {
       var cell = getCellEl(r, c);
       if (!cell) continue;
@@ -1027,7 +1039,7 @@
     var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
     var titles = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'];
-    var title = won ? titles[tries - 1] : 'Better luck next time';
+    var title = won ? (titles[tries - 1] || 'Solved!') : 'Better luck next time';
 
     var digitHtml = '';
     secret.forEach(function (d) {
@@ -1035,7 +1047,7 @@
     });
 
     var subtitle = won
-      ? 'Solved in ' + tries + '/' + MAX_GUESSES + '&nbsp;&nbsp;·&nbsp;&nbsp;' + timeStr
+      ? 'Solved in ' + tries + (game.mode === 'practice' && dom.unlimitedToggle.checked ? ' guesses' : '/' + MAX_GUESSES) + '&nbsp;&nbsp;&middot;&nbsp;&nbsp;' + timeStr
       : 'The number was';
 
     var nextPuzzle = '';
@@ -1168,7 +1180,8 @@
   // ================================================================
   function generateShareText() {
     var num = game.mode === 'daily' ? '#' + game.puzzleNum : '(Practice)';
-    var result = game.won ? game.guesses.length + '/' + MAX_GUESSES : 'X/' + MAX_GUESSES;
+    var unlimited = game.mode === 'practice' && dom.unlimitedToggle.checked;
+    var result = game.won ? game.guesses.length + (unlimited ? '' : '/' + MAX_GUESSES) : 'X/' + MAX_GUESSES;
     var grid = '';
     game.guesses.forEach(function (g) {
       var i;
@@ -1368,6 +1381,17 @@
   });
 
   dom.overlay.addEventListener('click', closeModal);
+
+  dom.unlimitedToggle.addEventListener('change', function () {
+    localStorage.setItem('nurdle_unlimited', dom.unlimitedToggle.checked ? '1' : '0');
+    if (game.mode === 'practice' && !game.gameOver) {
+      newGame('practice');
+    }
+  });
+
+
+  // Load unlimited preference
+  dom.unlimitedToggle.checked = localStorage.getItem('nurdle_unlimited') === '1';
 
   // ================================================================
   //  BOOT
