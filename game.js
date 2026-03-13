@@ -470,6 +470,8 @@
   function startSecretSelection() {
     battle.secretChoosing = true;
     battle.customSecret = [];
+    if (!game.keyStates) game.keyStates = {};
+    for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
     showView('select-secret');
     renderSelectMode();
     dom.lockSecretBtn.disabled = false;
@@ -1330,7 +1332,11 @@
       e.preventDefault();
       deleteDigit();
     } else if (e.key === 'Enter') {
-      submitGuess();
+      if (battle.secretChoosing) {
+        dom.lockSecretBtn.click();
+      } else {
+        submitGuess();
+      }
     }
   });
 
