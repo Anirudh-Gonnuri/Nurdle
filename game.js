@@ -221,8 +221,8 @@
       return;
     }
     if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) {
-      showToast("Waiting for opponent's turn");
-      return;
+      // Allow input digit on numpad but show toast if they try to submit
+      // return;
     }
     if (game.gameOver || game.currentGuess.length >= NUM_DIGITS) return;
     game.currentGuess.push(d);
@@ -243,14 +243,16 @@
       }
       return;
     }
-    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) return;
     if (game.gameOver || game.currentGuess.length === 0) return;
     game.currentGuess.pop();
     renderCurrentRow();
   }
 
   function submitGuess() {
-    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) return;
+    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) {
+      showToast("Waiting for opponent's turn");
+      return;
+    }
     if (game.gameOver) return;
     if (game.currentGuess.length < NUM_DIGITS) {
       shakeRow(game.currentRow);
@@ -467,6 +469,8 @@
     battle.customSecret = [];
     showView('select-secret');
     renderSelectMode();
+    dom.lockSecretBtn.disabled = false;
+    dom.lockSecretBtn.textContent = 'LOCK SECRET';
     renderKeypad(); // Ensure keypad is visible and reset
   }
 
@@ -612,6 +616,8 @@
   function resetBattleState() {
     if (battle.roomRef) {
       battle.roomRef.off();
+      // Remove our player from the room or the entire room if empty
+      battle.roomRef.child(battle.mySlot).remove();
     }
     battle.active = false;
     battle.roomCode = null;
@@ -623,6 +629,31 @@
     battle.oppDone = false;
     battleResultShown = false;
   }
+
+  window.playAgain = function () {
+    closeModal();
+    if (!battle.roomRef) {
+      backToBattleLobby();
+      return;
+    }
+    // Reset room state for another round
+    battle.roomRef.child(battle.mySlot).update({
+      guesses: 0,
+      solved: false,
+      done: false
+    });
+    // Remove old secrets and winner to start fresh
+    if (battle.mySlot === 'p1') {
+      battle.roomRef.update({
+        p1Secret: null,
+        p2Secret: null,
+        winner: null,
+        turn: null
+      });
+    }
+    battleResultShown = false;
+    startSecretSelection();
+  };
 
   function renderBattleTracker() {
     renderTrackerDots(dom.myProgress, game.guesses.length, game.won, game.gameOver && !game.won);
@@ -669,12 +700,11 @@
         turnBanner.style.color = '#fff';
         dom.keypad.style.opacity = '1';
         dom.keypad.style.pointerEvents = 'auto'; // unlock keypad
-      } else {
         turnBanner.textContent = 'OPPONENT\'S TURN...';
         turnBanner.style.backgroundColor = 'var(--surface)';
         turnBanner.style.color = 'var(--text-dim)';
         dom.keypad.style.opacity = '0.5';
-        dom.keypad.style.pointerEvents = 'none'; // lock keypad
+        dom.keypad.style.pointerEvents = 'auto'; // unlock keypad
       }
     } else {
       turnBanner.innerHTML = '&nbsp;';
@@ -962,6 +992,9 @@
 
   window.backToBattleLobby = function () {
     closeModal();
+    if (battle.roomRef && battle.mySlot) {
+      battle.roomRef.child(battle.mySlot).remove();
+    }
     resetBattleState();
     showBattleLobby();
   };
@@ -1079,11 +1112,9 @@
           '<div class="score-val ' + oppScoreClass + '">' + oppText + '</div>' +
         '</div>' +
       '</div>' +
-      '<button class="modal-btn btn-new" onclick="backToBattleLobby()">Play Again</button>' +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
+      '<button class="modal-btn btn-new" onclick="playAgain()">Play Again</button>' +
+      '<button class="modal-btn btn-close" onclick="backToBattleLobby()">Leave Room</button>'
     );
-
-    resetBattleState();
   }
 
   function showStats() {
