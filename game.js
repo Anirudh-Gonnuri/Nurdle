@@ -2,10 +2,7 @@
   'use strict';
 
   // ================================================================
-  //  FIREBASE CONFIG — FILL THIS IN FOR BATTLE MODE
-  //
-  //  See setup instructions at the bottom of this file.
-  //  Daily and Practice modes work without Firebase.
+  //  FIREBASE CONFIG
   // ================================================================
   var FIREBASE_CONFIG = {
     apiKey: "AIzaSyAwWzu1S6Uj4xpxCR0IQAv92kBI3xUgL5U",
@@ -22,8 +19,7 @@
   // ================================================================
   var MAX_GUESSES = 6;
   var NUM_DIGITS = 3;
-  // The game starts counting days from this date (Day 1 is the day AFTER this date)
-  var EPOCH = new Date(2026, 2, 11); // March 11, 2026 (Month is 0-indexed)
+  var EPOCH = new Date(2026, 2, 11);
 
   // ================================================================
   //  GAME STATE
@@ -220,10 +216,6 @@
       }
       return;
     }
-    if (game.mode === 'battle' && !battle.secretChoosing && !battle.myTurn) {
-      // Allow input digit on numpad but show toast if they try to submit
-      // return;
-    }
     if (game.gameOver || game.currentGuess.length >= NUM_DIGITS) return;
     game.currentGuess.push(d);
     renderCurrentRow();
@@ -256,7 +248,7 @@
     if (game.gameOver) return;
     if (game.currentGuess.length < NUM_DIGITS) {
       shakeRow(game.currentRow);
-      showToast('Enter ' + NUM_DIGITS + ' digits');
+      showToast('Not enough digits');
       return;
     }
 
@@ -297,7 +289,6 @@
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
-          // Yield turn to opponent
           battle.roomRef.update({ turn: battle.oppSlot });
         } else {
           if (game.mode === 'daily') {
@@ -317,7 +308,6 @@
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
-          // Yield turn to opponent
           battle.roomRef.update({ turn: battle.oppSlot });
         }
         if (game.mode === 'battle') {
@@ -466,16 +456,14 @@
     });
   }
 
-  // (Removed startCountdownSequence to improve UX)
-
   function startSecretSelection() {
     battle.secretChoosing = true;
     battle.customSecret = [];
     showView('select-secret');
     renderSelectMode();
     dom.lockSecretBtn.disabled = false;
-    dom.lockSecretBtn.textContent = 'LOCK SECRET';
-    renderKeypad(); // Ensure keypad is visible and reset
+    dom.lockSecretBtn.textContent = 'LOCK IN NUMBER';
+    renderKeypad();
   }
 
   function renderSelectMode() {
@@ -483,7 +471,7 @@
     for (var i = 0; i < NUM_DIGITS; i++) {
       var d = battle.customSecret[i];
       digits[i].textContent = d !== undefined ? d : '';
-      digits[i].style.borderColor = d !== undefined ? 'var(--accent)' : 'var(--border-empty)';
+      digits[i].style.borderColor = d !== undefined ? 'var(--green)' : 'var(--border-empty)';
     }
   }
 
@@ -491,18 +479,14 @@
     battle.roomRef.on('value', function (snap) {
       var data = snap.val();
       if (!data) return;
-      
-      // If both p1Secret and p2Secret exist, we can start the game!
-      if (data.p1Secret && data.p2Secret) {
-        battle.roomRef.off('value'); // stop listening to the root
 
-        // We guess the secret the opponent wrote for us
+      if (data.p1Secret && data.p2Secret) {
+        battle.roomRef.off('value');
+
         var secretToGuess = data[battle.oppSlot + 'Secret'].split('').map(Number);
-        
-        // The player who created the room (p1) goes first
+
         battle.myTurn = (battle.mySlot === 'p1');
-        
-        // Update database to specify turn (only p1 needs to do this to avoid race conditions)
+
         if (battle.mySlot === 'p1' && !data.turn) {
           battle.roomRef.update({ turn: 'p1' });
         }
@@ -556,7 +540,6 @@
   }
 
   function listenForBattleUpdates() {
-    // Listen for opponent progress
     battle.roomRef.child(battle.oppSlot).on('value', function (snap) {
       var data = snap.val();
       if (!data) return;
@@ -573,13 +556,11 @@
         return;
       }
 
-      // Both done, no winner set => draw
       if (data.done && !data.solved && game.gameOver && !game.won) {
         endBattle('draw');
       }
     });
 
-    // Listen for turn changes
     battle.roomRef.child('turn').on('value', function (snap) {
       var whoseTurn = snap.val();
       if (!whoseTurn) return;
@@ -587,7 +568,6 @@
       renderBattleTracker();
     });
 
-    // Listen for winner
     battle.roomRef.child('winner').on('value', function (snap) {
       var winner = snap.val();
       if (!winner) return;
@@ -608,10 +588,6 @@
     battleResultShown = true;
     game.gameOver = true;
 
-    if (result === 'win' && !game.won) {
-      // Won by default (opponent disconnected)
-    }
-
     setTimeout(function () {
       showBattleResultModal(result);
     }, result === 'win' ? 400 : 200);
@@ -620,7 +596,6 @@
   function resetBattleState() {
     if (battle.roomRef) {
       battle.roomRef.off();
-      // Remove our player from the room or the entire room if empty
       battle.roomRef.child(battle.mySlot).remove();
     }
     battle.active = false;
@@ -640,13 +615,11 @@
       backToBattleLobby();
       return;
     }
-    // Reset room state for another round
     battle.roomRef.child(battle.mySlot).update({
       guesses: 0,
       solved: false,
       done: false
     });
-    // Remove old secrets and winner to start fresh
     if (battle.mySlot === 'p1') {
       battle.roomRef.update({
         p1Secret: null,
@@ -682,33 +655,27 @@
       container.appendChild(dot);
     }
 
-    // Turn indicator below tracker
     var turnBanner = document.getElementById('battleTurnBanner');
     if (!turnBanner) {
       turnBanner = document.createElement('div');
       turnBanner.id = 'battleTurnBanner';
-      turnBanner.style.textAlign = 'center';
-      turnBanner.style.padding = '8px';
-      turnBanner.style.fontSize = '12px';
-      turnBanner.style.fontWeight = '700';
-      turnBanner.style.letterSpacing = '1px';
-      turnBanner.style.marginTop = '10px';
-      turnBanner.style.borderRadius = '4px';
+      turnBanner.style.cssText = 'text-align:center;padding:6px;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:8px;border-radius:4px;text-transform:uppercase;';
       dom.battleTracker.appendChild(turnBanner);
     }
 
     if (battle.active && !game.gameOver) {
       if (battle.myTurn) {
         turnBanner.textContent = 'YOUR TURN';
-        turnBanner.style.backgroundColor = 'var(--accent)';
+        turnBanner.style.backgroundColor = 'var(--green)';
         turnBanner.style.color = '#fff';
         dom.keypad.style.opacity = '1';
-        dom.keypad.style.pointerEvents = 'auto'; // unlock keypad
-        turnBanner.textContent = 'OPPONENT\'S TURN...';
-        turnBanner.style.backgroundColor = 'var(--surface)';
+        dom.keypad.style.pointerEvents = 'auto';
+      } else {
+        turnBanner.textContent = "OPPONENT'S TURN";
+        turnBanner.style.backgroundColor = 'var(--evaluation-bg)';
         turnBanner.style.color = 'var(--text-dim)';
-        dom.keypad.style.opacity = '0.5';
-        dom.keypad.style.pointerEvents = 'auto'; // unlock keypad
+        dom.keypad.style.opacity = '0.4';
+        dom.keypad.style.pointerEvents = 'auto';
       }
     } else {
       turnBanner.innerHTML = '&nbsp;';
@@ -771,12 +738,12 @@
 
       if (k === 'del') {
         btn.classList.add('fn');
-        btn.textContent = 'DEL';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"/></svg>';
         btn.setAttribute('data-key', 'del');
         btn.addEventListener('click', deleteDigit);
       } else if (k === 'go') {
         btn.classList.add('fn', 'submit-key');
-        btn.textContent = 'GO';
+        btn.textContent = 'ENTER';
         btn.setAttribute('data-key', 'go');
         btn.addEventListener('click', submitGuess);
       } else {
@@ -860,6 +827,8 @@
       cell.textContent = entry.digits[c];
       cell.classList.remove('filled', 'active-row');
       cell.classList.add('submitted');
+      cell.style.background = 'var(--absent)';
+      cell.style.borderColor = 'var(--absent)';
     }
   }
 
@@ -875,10 +844,10 @@
         var dot = document.getElementById('dot-' + row + '-' + idx);
         dot.classList.add(cls, 'revealed');
         dot.style.animation = 'dotReveal 0.35s ease forwards';
-      }, 200 + idx * 150);
+      }, 150 + idx * 120);
     });
 
-    setTimeout(callback, 200 + dots.length * 150 + 200);
+    setTimeout(callback, 150 + dots.length * 120 + 200);
   }
 
   function renderKeypad() {
@@ -911,7 +880,12 @@
         dot.style.transform = 'scale(1)';
       });
       if (entry.correct === NUM_DIGITS) {
-        for (var c = 0; c < NUM_DIGITS; c++) getCellEl(r, c).classList.add('won');
+        for (var c = 0; c < NUM_DIGITS; c++) {
+          var cell = getCellEl(r, c);
+          cell.classList.add('won');
+          cell.style.background = 'var(--green)';
+          cell.style.borderColor = 'var(--green)';
+        }
       }
     });
     renderCurrentRow();
@@ -926,35 +900,37 @@
     var row = document.getElementById('row-' + r);
     row.style.animation = 'none';
     void row.offsetWidth;
-    row.style.animation = 'shake 0.5s ease';
-    setTimeout(function () { row.style.animation = ''; }, 500);
+    row.style.animation = 'shake 0.6s ease';
+    setTimeout(function () { row.style.animation = ''; }, 600);
   }
 
   function celebrateWin(row) {
     for (var c = 0; c < NUM_DIGITS; c++) {
       var cell = getCellEl(row, c);
       cell.classList.add('won');
+      cell.style.background = 'var(--green)';
+      cell.style.borderColor = 'var(--green)';
       cell.style.animation = 'none';
       void cell.offsetWidth;
       cell.style.animationDelay = c * 100 + 'ms';
-      cell.style.animation = 'bounce 0.6s ease ' + c * 100 + 'ms';
+      cell.style.animation = 'bounce 1s ease ' + c * 100 + 'ms';
     }
     launchConfetti();
   }
 
   function launchConfetti() {
     dom.confetti.innerHTML = '';
-    var colors = ['#22c55e', '#eab308', '#ef4444', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#06b6d4'];
-    for (var i = 0; i < 80; i++) {
+    var colors = ['#6aaa64', '#c9b458', '#e74c3c', '#3b82f6', '#a855f7', '#ec4899', '#f97316'];
+    for (var i = 0; i < 60; i++) {
       var piece = document.createElement('div');
       piece.className = 'confetti-piece ' + (Math.random() > 0.5 ? 'rect' : 'circle');
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
       piece.style.left = Math.random() * 100 + '%';
-      piece.style.width = (Math.random() * 8 + 6) + 'px';
-      piece.style.height = (Math.random() * 8 + 6) + 'px';
+      piece.style.width = (Math.random() * 8 + 5) + 'px';
+      piece.style.height = (Math.random() * 8 + 5) + 'px';
       piece.style.setProperty('--rot', (Math.random() * 1440 - 720) + 'deg');
       piece.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
-      piece.style.animationDelay = (Math.random() * 0.8) + 's';
+      piece.style.animationDelay = (Math.random() * 0.6) + 's';
       dom.confetti.appendChild(piece);
     }
     setTimeout(function () { dom.confetti.innerHTML = ''; }, 4000);
@@ -964,7 +940,7 @@
   //  TOAST
   // ================================================================
   function showToast(msg, duration) {
-    duration = duration || 1900;
+    duration = duration || 1500;
     var toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = msg;
@@ -1005,35 +981,39 @@
 
   function showHelp() {
     openModal(
-      '<button class="modal-close" onclick="closeModal()">x</button>' +
-      '<div class="modal-title">HOW TO PLAY</div>' +
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
+      '<div class="modal-title">How To Play</div>' +
       '<div class="modal-section">' +
-        '<p>Guess the secret <strong>3-digit number</strong> in 6 tries. All digits are unique (no repeats).</p>' +
-        '<p style="margin-top:8px">After each guess, feedback dots show how close you are ' +
-        '- but <em>not which digit</em> they refer to.</p>' +
+      '<p>Guess the secret <strong>3-digit number</strong> in 6 tries. All digits are unique (no repeats).</p>' +
+      '<p style="margin-top:8px">After each guess, feedback dots reveal how close you are — but <em>not which digit</em> they refer to.</p>' +
       '</div>' +
+      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
       '<div class="modal-section">' +
-        '<h3>Feedback Dots</h3>' +
-        '<div class="help-example"><div class="help-dot g"></div><span>Digit is correct and in the right position</span></div>' +
-        '<div class="help-example"><div class="help-dot y"></div><span>Digit exists but in the wrong position</span></div>' +
-        '<div class="help-example"><div class="help-dot a"></div><span>Digit is not in the number</span></div>' +
+      '<h3>Feedback</h3>' +
+      '<div class="help-example"><div class="help-dot g"></div><span>Correct digit in the correct position</span></div>' +
+      '<div class="help-example"><div class="help-dot y"></div><span>Correct digit in the wrong position</span></div>' +
+      '<div class="help-example"><div class="help-dot a"></div><span>Digit is not in the number</span></div>' +
       '</div>' +
+      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
       '<div class="modal-section">' +
-        '<h3>Example</h3>' +
-        '<p>Secret: <strong>4 1 8</strong>  |  Guess: <strong>1 0 8</strong></p>' +
-        '<div class="help-example" style="gap:6px">' +
-          '<div class="help-dot g"></div><div class="help-dot y"></div><div class="help-dot a"></div>' +
-          '<span style="margin-left:6px">1 correct, 1 misplaced, 1 absent</span>' +
-        '</div>' +
+      '<h3>Example</h3>' +
+      '<p>Secret: <strong>4 1 8</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Guess: <strong>1 0 8</strong></p>' +
+      '<div class="help-example" style="gap:6px;border-bottom:none">' +
+      '<div class="help-dot g"></div><div class="help-dot y"></div><div class="help-dot a"></div>' +
+      '<span style="margin-left:6px">1 correct, 1 misplaced, 1 absent</span>' +
       '</div>' +
+      '</div>' +
+      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
       '<div class="modal-section">' +
-        '<h3>Modes</h3>' +
-        '<p><strong>Daily</strong> - Same number for everyone, resets at midnight.</p>' +
-        '<p style="margin-top:4px"><strong>Practice</strong> - Unlimited random puzzles.</p>' +
-        '<p style="margin-top:4px"><strong>Battle</strong> - Race a friend in real-time.</p>' +
-        '<p style="margin-top:8px"><strong>Long press</strong> any key to cross it out as scratch work.</p>' +
+      '<h3>Modes</h3>' +
+      '<p><strong>Daily</strong> — Same number for everyone. Resets at midnight.</p>' +
+      '<p style="margin-top:4px"><strong>Practice</strong> — Unlimited random puzzles.</p>' +
+      '<p style="margin-top:4px"><strong>Battle</strong> — Race a friend in real-time.</p>' +
+      '<p style="margin-top:10px;font-size:13px;color:var(--text-dim)"><strong>Tip:</strong> Long-press a key to cross it out as scratch work.</p>' +
       '</div>' +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Got it</button>'
+      '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
     );
   }
 
@@ -1055,28 +1035,33 @@
     });
 
     var subtitle = won
-      ? 'Solved in ' + tries + '/' + MAX_GUESSES + ' -- ' + timeStr
-      : 'The number was ' + secret.join('');
+      ? 'Solved in ' + tries + '/' + MAX_GUESSES + '&nbsp;&nbsp;·&nbsp;&nbsp;' + timeStr
+      : 'The number was';
 
     var nextPuzzle = '';
     if (game.mode === 'daily') {
-      nextPuzzle = '<div class="countdown">Next Nurdle in <span id="countdown-timer">--:--:--</span></div>';
+      nextPuzzle =
+        '<div style="border-top:1px solid var(--header-border);margin:16px 0"></div>' +
+        '<div class="countdown">Next Nurdle<br><span id="countdown-timer">--:--:--</span></div>';
     }
 
     var buttons = '';
     if (won || game.mode === 'daily') {
-      buttons += '<button class="modal-btn btn-share" onclick="shareResult()">Share Result</button>';
+      buttons += '<button class="modal-btn btn-share" onclick="shareResult()">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="currentColor" style="margin-right:8px"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>' +
+        'Share</button>';
     }
     if (game.mode === 'practice') {
       buttons += '<button class="modal-btn btn-new" onclick="newPracticeGame()">New Game</button>';
     }
-    buttons += '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>';
 
     openModal(
-      '<button class="modal-close" onclick="closeModal()">x</button>' +
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
       '<div class="modal-title">' + title + '</div>' +
       '<div class="result-number">' + digitHtml + '</div>' +
-      '<p style="text-align:center;color:var(--text-dim);font-size:13px">' + subtitle + '</p>' +
+      '<p style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:4px">' + subtitle + '</p>' +
       nextPuzzle + buttons
     );
 
@@ -1085,7 +1070,7 @@
 
   function showBattleResultModal(result) {
     var title, tagClass;
-    if (result === 'win') { title = 'YOU WIN'; tagClass = 'win-tag'; }
+    if (result === 'win') { title = 'YOU WIN!'; tagClass = 'win-tag'; }
     else if (result === 'lose') { title = 'YOU LOSE'; tagClass = 'lose-tag'; }
     else { title = 'DRAW'; tagClass = 'draw-tag'; }
 
@@ -1101,20 +1086,22 @@
     var oppScoreClass = result === 'lose' ? 'win-score' : (result === 'win' ? 'lose-score' : '');
 
     openModal(
-      '<button class="modal-close" onclick="closeModal()">x</button>' +
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
       '<div class="modal-title">' + title + '</div>' +
       '<div style="text-align:center"><span class="battle-result-tag ' + tagClass + '">' +
-        'Room: ' + battle.roomCode + '</span></div>' +
+      'Room: ' + battle.roomCode + '</span></div>' +
       '<div class="result-number">' + digitHtml + '</div>' +
       '<div class="battle-scores">' +
-        '<div class="battle-score-player">' +
-          '<div class="score-label">You</div>' +
-          '<div class="score-val ' + myScoreClass + '">' + myText + '</div>' +
-        '</div>' +
-        '<div class="battle-score-player">' +
-          '<div class="score-label">Opponent</div>' +
-          '<div class="score-val ' + oppScoreClass + '">' + oppText + '</div>' +
-        '</div>' +
+      '<div class="battle-score-player">' +
+      '<div class="score-label">You</div>' +
+      '<div class="score-val ' + myScoreClass + '">' + myText + '</div>' +
+      '</div>' +
+      '<div class="battle-score-player">' +
+      '<div class="score-label">Opponent</div>' +
+      '<div class="score-val ' + oppScoreClass + '">' + oppText + '</div>' +
+      '</div>' +
       '</div>' +
       '<button class="modal-btn btn-new" onclick="playAgain()">Play Again</button>' +
       '<button class="modal-btn btn-close" onclick="backToBattleLobby()">Leave Room</button>'
@@ -1128,24 +1115,27 @@
 
     var distHtml = '';
     for (var i = 0; i < MAX_GUESSES; i++) {
-      var w = Math.max(8, Math.round((stats.distribution[i] / maxDist) * 100));
+      var w = Math.max(7, Math.round((stats.distribution[i] / maxDist) * 100));
       var hl = game.won && game.guesses.length === i + 1 ? ' highlight' : '';
       distHtml +=
         '<div class="dist-row">' +
-        '<span style="width:14px;text-align:right">' + (i + 1) + '</span>' +
+        '<span>' + (i + 1) + '</span>' +
         '<div class="dist-bar' + hl + '" style="width:' + w + '%">' + stats.distribution[i] + '</div>' +
         '</div>';
     }
 
     openModal(
-      '<button class="modal-close" onclick="closeModal()">x</button>' +
-      '<div class="modal-title">STATISTICS</div>' +
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
+      '<div class="modal-title">Statistics</div>' +
       '<div class="stat-row">' +
-        '<div class="stat-item"><div class="stat-val">' + stats.gamesPlayed + '</div><div class="stat-label">Played</div></div>' +
-        '<div class="stat-item"><div class="stat-val">' + pct + '</div><div class="stat-label">Win %</div></div>' +
-        '<div class="stat-item"><div class="stat-val">' + stats.currentStreak + '</div><div class="stat-label">Streak</div></div>' +
-        '<div class="stat-item"><div class="stat-val">' + stats.maxStreak + '</div><div class="stat-label">Best</div></div>' +
+      '<div class="stat-item"><div class="stat-val">' + stats.gamesPlayed + '</div><div class="stat-label">Played</div></div>' +
+      '<div class="stat-item"><div class="stat-val">' + pct + '</div><div class="stat-label">Win %</div></div>' +
+      '<div class="stat-item"><div class="stat-val">' + stats.currentStreak + '</div><div class="stat-label">Current<br>Streak</div></div>' +
+      '<div class="stat-item"><div class="stat-val">' + stats.maxStreak + '</div><div class="stat-label">Max<br>Streak</div></div>' +
       '</div>' +
+      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
       '<div class="modal-section"><h3>Guess Distribution</h3>' + distHtml + '</div>' +
       '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
     );
@@ -1153,19 +1143,21 @@
 
   function showFirebaseSetup() {
     openModal(
-      '<button class="modal-close" onclick="closeModal()">x</button>' +
-      '<div class="modal-title">SETUP REQUIRED</div>' +
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
+      '<div class="modal-title">Setup Required</div>' +
       '<div class="modal-section">' +
-        '<p>Battle Mode needs Firebase (free) for real-time multiplayer.</p>' +
-        '<p style="margin-top:12px"><strong>One-time setup:</strong></p>' +
-        '<p style="margin-top:8px">1. Go to <strong>console.firebase.google.com</strong></p>' +
-        '<p>2. Create a new project (disable Analytics)</p>' +
-        '<p>3. Click <strong>Build > Realtime Database > Create Database</strong></p>' +
-        '<p>4. Choose any location, start in <strong>Test mode</strong></p>' +
-        '<p>5. Go to <strong>Project Settings</strong> (gear icon)</p>' +
-        '<p>6. Under "Your apps", click the web icon (&lt;/&gt;)</p>' +
-        '<p>7. Register an app name, copy the <strong>firebaseConfig</strong> object</p>' +
-        '<p>8. Paste those values into the top of <strong>game.js</strong></p>' +
+      '<p>Battle Mode needs Firebase (free) for real-time multiplayer.</p>' +
+      '<p style="margin-top:12px"><strong>One-time setup:</strong></p>' +
+      '<p style="margin-top:8px">1. Go to <strong>console.firebase.google.com</strong></p>' +
+      '<p>2. Create a new project (disable Analytics)</p>' +
+      '<p>3. Click <strong>Build → Realtime Database → Create Database</strong></p>' +
+      '<p>4. Choose any location, start in <strong>Test mode</strong></p>' +
+      '<p>5. Go to <strong>Project Settings</strong> (gear icon)</p>' +
+      '<p>6. Under "Your apps", click the web icon (&lt;/&gt;)</p>' +
+      '<p>7. Register an app name, copy the <strong>firebaseConfig</strong> object</p>' +
+      '<p>8. Paste those values into the top of <strong>game.js</strong></p>' +
       '</div>' +
       '<button class="modal-btn btn-close" onclick="closeModal()">Got it</button>'
     );
@@ -1191,7 +1183,7 @@
   function shareResult() {
     var text = generateShareText();
     if (navigator.share) {
-      navigator.share({ text: text }).catch(function () {});
+      navigator.share({ text: text }).catch(function () { });
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(function () {
         showToast('Copied to clipboard');
@@ -1350,7 +1342,7 @@
   dom.copyCodeBtn.addEventListener('click', function () {
     if (navigator.clipboard && battle.roomCode) {
       navigator.clipboard.writeText(battle.roomCode).then(function () {
-        showToast('Code copied');
+        showToast('Code copied!');
       });
     }
   });
@@ -1364,10 +1356,9 @@
     dom.lockSecretBtn.textContent = 'WAITING...';
     dom.lockSecretBtn.disabled = true;
 
-    // Send our chosen secret up to the room
     var myData = {};
     myData[battle.mySlot + 'Secret'] = battle.customSecret.join('');
-    battle.roomRef.update(myData).then(function() {
+    battle.roomRef.update(myData).then(function () {
       listenForBothSecrets();
     });
   });
