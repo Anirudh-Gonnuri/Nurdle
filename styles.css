@@ -908,5 +908,70 @@ header h1 {
   #board { gap: 4px; }
   .row .cells { gap: 4px; }
   #keypad { gap: 4px; }
-  header { padding: 6px 4px; }
+}
+
+/* ===== DESKTOP RESPONSIVE LAYOUT ===== */
+@media (min-width: 600px) {
+  #app {
+    max-width: 600px;
+    padding: 0 16px;
+  }
+  
+  header h1 {
+    font-size: 42px;
+  }
+  
+  .mode-btn {
+    font-size: 15px;
+    padding: 10px 20px;
+  }
+
+  /* Increase cell sizes */
+  .cell {
+    width: 76px;
+    height: 76px;
+    font-size: 40px;
+  }
+
+  .cells {
+    gap: 10px;
+  }
+
+  .row {
+    gap: 10px;
+  }
+
+  #board {
+    gap: 10px;
+  }
+
+  /* Adjust feedback dots placement for larger cells/gaps */
+  .feedback {
+    right: -80px; 
+    width: 68px;
+  }
+  
+  .dot {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Widen Keypad */
+  #keypad {
+    max-width: 500px;
+    gap: 8px;
+  }
+
+  .key {
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .key.fn {
+    font-size: 18px;
+  }
+  
+  .key.submit-key {
+    font-size: 18px;
+  }
 }
