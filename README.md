@@ -2,7 +2,7 @@
 
 A daily number-guessing game inspired by Wordle. Instead of words, you guess a 3-digit number with all unique digits. After each guess, colored feedback dots tell you how many digits are correct, misplaced, or absent -- but not which ones.
 
-Play it here: [https://anirudh-gonnuri.github.io/nurdle](https://anirudhgonnuri.github.io/nurdle)
+Play it here: [https://nurdle.vercel.app](https://nurdle.vercel.app)
 
 ## How to Play
 
