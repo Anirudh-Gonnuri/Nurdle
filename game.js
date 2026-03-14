@@ -691,9 +691,13 @@
     for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
     renderKeypad();
 
+    var modalDelay = result === 'win' ? 400 : 200;
     setTimeout(function () {
-      showBattleResultModal(result);
-    }, result === 'win' ? 400 : 200);
+      battle.roomRef.child('score').once('value', function (snap) {
+        battle.score = snap.val() || { p1: 0, p2: 0, draws: 0 };
+        showBattleResultModal(result);
+      });
+    }, modalDelay);
 
     listenForRematch();
   }
