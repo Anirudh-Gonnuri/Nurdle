@@ -786,24 +786,6 @@
   function renderBattleTracker() {
     renderTrackerDots(dom.myProgress, game.guesses.length, game.won, game.gameOver && !game.won);
     renderTrackerDots(dom.oppProgress, battle.oppGuesses, battle.oppSolved, battle.oppDone && !battle.oppSolved);
-
-    var scoreEl = document.getElementById('battleSessionScore');
-    if (!scoreEl) {
-      scoreEl = document.createElement('div');
-      scoreEl.id = 'battleSessionScore';
-      scoreEl.className = 'session-score';
-      dom.battleTracker.appendChild(scoreEl);
-    }
-    if (battle.score) {
-      var myScore = battle.mySlot === 'p1' ? battle.score.p1 : battle.score.p2;
-      var oppScore = battle.mySlot === 'p1' ? battle.score.p2 : battle.score.p1;
-      var draws = battle.score.draws || 0;
-      var scoreText = myScore + ' — ' + oppScore;
-      if (draws > 0) scoreText += ' · ' + draws + (draws === 1 ? ' draw' : ' draws');
-      scoreEl.textContent = scoreText;
-    } else {
-      scoreEl.textContent = '';
-    }
   }
 
   function renderTrackerDots(container, guessCount, solved, failed) {
