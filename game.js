@@ -46,8 +46,8 @@
   //  DOM REFERENCES
   // ================================================================
   var dom = {
-    practiceOptions: document.getElementById('practice-options'),
     unlimitedToggle: document.getElementById('unlimitedToggle'),
+    duplicatesToggle: document.getElementById('duplicatesToggle'),
     board: document.getElementById('board'),
     keypad: document.getElementById('keypad'),
     toasts: document.getElementById('toast-container'),
@@ -55,6 +55,7 @@
     overlay: document.getElementById('overlay'),
     modal: document.getElementById('modal'),
     helpBtn: document.getElementById('helpBtn'),
+    settingsBtn: document.getElementById('settingsBtn'),
     statsBtn: document.getElementById('statsBtn'),
     dailyBtn: document.getElementById('dailyBtn'),
     practiceBtn: document.getElementById('practiceBtn'),
@@ -81,6 +82,11 @@
   // Helper function to check if unlimited mode is active
   function isUnlimited() {
     return (game.mode === 'practice' || game.mode === 'battle') && dom.unlimitedToggle.checked;
+  }
+
+  // Helper function to check if duplicates are allowed
+  function allowDuplicates() {
+    return (game.mode === 'practice' || game.mode === 'battle') && dom.duplicatesToggle.checked;
   }
 
 
@@ -121,7 +127,9 @@
     for (var i = 0; i < NUM_DIGITS; i++) {
       var idx = Math.floor(Math.random() * pool.length);
       result.push(pool[idx]);
-      pool.splice(idx, 1);
+      if (!allowDuplicates()) {
+        pool.splice(idx, 1);
+      }
     }
     return result;
   }
@@ -168,7 +176,6 @@
     dom.battleCountdown.classList.toggle('hidden', view !== 'countdown');
     dom.keypadContainer.classList.toggle('hidden', view !== 'game' && view !== 'select-secret');
     dom.battleTracker.classList.toggle('hidden', !(view === 'game' && battle.active));
-    dom.practiceOptions.classList.toggle('hidden', game.mode !== 'practice' && game.mode !== 'battle');
   }
 
   function updateModeButtons(mode) {
@@ -218,13 +225,13 @@
   // ================================================================
   function inputDigit(d) {
     if (battle.secretChoosing) {
-      if (battle.customSecret.length < NUM_DIGITS) {
+      if (battle.customSecret.length < NUM_DIGITS && (allowDuplicates() || battle.customSecret.indexOf(d) === -1)) {
         battle.customSecret.push(d);
         renderSelectMode();
       }
       return;
     }
-    if (game.gameOver || game.currentGuess.length >= NUM_DIGITS) return;
+    if (game.gameOver || game.currentGuess.length >= NUM_DIGITS || (!allowDuplicates() && game.currentGuess.indexOf(d) !== -1)) return;
     game.currentGuess.push(d);
     renderCurrentRow();
     var cell = getCellEl(game.currentRow, game.currentGuess.length - 1);
@@ -260,14 +267,16 @@
       return;
     }
 
-    var unique = [];
-    for (var u = 0; u < game.currentGuess.length; u++) {
-      if (unique.indexOf(game.currentGuess[u]) !== -1) {
-        shakeRow(game.currentRow);
-        showToast('No duplicate digits');
-        return;
+    if (!allowDuplicates()) {
+      var unique = [];
+      for (var u = 0; u < game.currentGuess.length; u++) {
+        if (unique.indexOf(game.currentGuess[u]) !== -1) {
+          shakeRow(game.currentRow);
+          showToast('No duplicate digits');
+          return;
+        }
+        unique.push(game.currentGuess[u]);
       }
-      unique.push(game.currentGuess[u]);
     }
 
     var guess = game.currentGuess.slice();
@@ -299,6 +308,7 @@
           syncBattleProgress();
           renderBattleTracker();
           battle.roomRef.update({ turn: battle.oppSlot });
+          checkBattleOutcome();
         } else {
           if (game.mode === 'daily') {
             updateStats(true, game.guesses.length);
@@ -306,20 +316,28 @@
           }
           setTimeout(showResult, 1800);
         }
-      } else if (game.currentRow >= MAX_GUESSES && !unlimited && game.mode !== 'battle') {
+      } else if (game.currentRow >= MAX_GUESSES && !unlimited) {
         game.gameOver = true;
-        if (game.mode === 'daily') {
-          updateStats(false, game.guesses.length);
-          saveDaily();
+        if (isBattle) {
+          syncBattleProgress();
+          renderBattleTracker();
+          battle.roomRef.update({ turn: battle.oppSlot });
+          checkBattleOutcome();
+        } else {
+          if (game.mode === 'daily') {
+            updateStats(false, game.guesses.length);
+            saveDaily();
+          }
+          setTimeout(showResult, 1000);
         }
-        setTimeout(showResult, 1000);
       } else {
         if (isBattle) {
           syncBattleProgress();
           renderBattleTracker();
           battle.roomRef.update({ turn: battle.oppSlot });
+          checkBattleOutcome();
         }
-        if (game.mode === 'battle' || unlimited) {
+        if (unlimited) {
           ensureRowExists(game.currentRow);
         }
         renderCurrentRow();
@@ -405,7 +423,6 @@
       dom.roomCodeDisplay.textContent = code;
       showView('waiting');
 
-      ref.child('p1').onDisconnect().update({ disconnected: true });
       listenForOpponentJoin();
     }).catch(function (err) {
       showToast('Failed to create room');
@@ -441,7 +458,6 @@
         battle.oppSlot = 'p1';
         battle.roomRef = ref;
 
-        ref.child('p2').onDisconnect().update({ disconnected: true });
         startSecretSelection();
       });
     }).catch(function () {
@@ -544,35 +560,63 @@
       solved: game.won,
       done: game.gameOver
     });
+  }
 
-    if (game.won) {
-      battle.roomRef.child('winner').transaction(function (current) {
-        if (current === null) return battle.mySlot;
-        return undefined;
-      });
+  // After both players have completed the same round, determine the outcome.
+  // Called whenever opponent data updates or when we finish our own turn.
+  function checkBattleOutcome() {
+    if (battleResultShown || !battle.active) return;
+
+    var myGuesses = game.guesses.length;
+    var oppGuesses = battle.oppGuesses;
+    var mySolved = game.won;
+    var oppSolved = battle.oppSolved;
+    var myDone = game.gameOver;
+    var oppDone = battle.oppDone;
+
+    // Both on the same round count — this round is complete for both
+    if (myGuesses === oppGuesses && myGuesses > 0) {
+      if (mySolved && oppSolved) {
+        // Both solved on the same round → tie
+        battle.roomRef.update({ winner: 'tie' });
+        endBattle('draw');
+        return;
+      }
+      if (mySolved && !oppSolved) {
+        // I solved, opponent didn't on same round → I win
+        battle.roomRef.update({ winner: battle.mySlot });
+        setTimeout(function () { endBattle('win'); }, 1600);
+        return;
+      }
+      if (!mySolved && oppSolved) {
+        // Opponent solved, I didn't on same round → I lose
+        game.gameOver = true;
+        setTimeout(function () { endBattle('lose'); }, 600);
+        return;
+      }
+    }
+
+    // Both done (ran out of guesses) without either solving
+    if (myDone && !mySolved && oppDone && !oppSolved) {
+      endBattle('draw');
+      return;
     }
   }
 
   function listenForBattleUpdates() {
     battle.roomRef.child(battle.oppSlot).on('value', function (snap) {
       var data = snap.val();
-      if (!data) return;
+      if (!data) {
+        if (battleResultShown) showToast('Opponent left the room');
+        return;
+      }
 
       battle.oppGuesses = data.guesses || 0;
       battle.oppSolved = data.solved || false;
       battle.oppDone = data.done || false;
       renderBattleTracker();
 
-      if (data.disconnected && !game.gameOver) {
-        showToast('Opponent disconnected');
-        game.gameOver = true;
-        endBattle('win');
-        return;
-      }
-
-      if (data.done && !data.solved && game.gameOver && !game.won) {
-        endBattle('draw');
-      }
+      checkBattleOutcome();
     });
 
     battle.roomRef.child('turn').on('value', function (snap) {
@@ -580,20 +624,6 @@
       if (!whoseTurn) return;
       battle.myTurn = (whoseTurn === battle.mySlot);
       renderBattleTracker();
-    });
-
-    battle.roomRef.child('winner').on('value', function (snap) {
-      var winner = snap.val();
-      if (!winner) return;
-
-      if (winner === battle.mySlot) {
-        if (game.won) {
-          setTimeout(function () { endBattle('win'); }, 1600);
-        }
-      } else {
-        game.gameOver = true;
-        setTimeout(function () { endBattle('lose'); }, 600);
-      }
     });
   }
 
@@ -608,6 +638,59 @@
     setTimeout(function () {
       showBattleResultModal(result);
     }, result === 'win' ? 400 : 200);
+
+    listenForRematch();
+  }
+
+  function listenForRematch() {
+    battle.roomRef.child('rematch').on('value', function (snap) {
+      var data = snap.val() || {};
+      var myReady = data[battle.mySlot] === true;
+      var oppReady = data[battle.oppSlot] === true;
+
+      if (myReady && oppReady) {
+        battle.roomRef.child('rematch').off();
+        doRematch();
+        return;
+      }
+
+      var btn = document.querySelector('.btn-new');
+      if (!btn) return;
+
+      if (myReady) {
+        btn.textContent = 'Waiting for opponent\u2026';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+      } else if (oppReady) {
+        btn.textContent = 'Play Again \u2014 Opponent is ready!';
+        btn.style.background = 'var(--green)';
+        btn.style.color = '#fff';
+        showToast('Opponent wants to play again!');
+      }
+    });
+  }
+
+  function doRematch() {
+    closeModal();
+    battleResultShown = false;
+    battle.roomRef.child(battle.mySlot).update({ guesses: 0, solved: false, done: false });
+    if (battle.mySlot === 'p1') {
+      battle.roomRef.child('firstTurn').once('value', function (snap) {
+        var lastFirst = snap.val() || 'p1';
+        var nextFirst = lastFirst === 'p1' ? 'p2' : 'p1';
+        battle.roomRef.update({
+          p1Secret: null,
+          p2Secret: null,
+          winner: null,
+          turn: null,
+          firstTurn: nextFirst,
+          rematch: null
+        });
+        startSecretSelection();
+      });
+    } else {
+      startSecretSelection();
+    }
   }
 
   function resetBattleState() {
@@ -627,32 +710,17 @@
   }
 
   window.playAgain = function () {
-    closeModal();
     if (!battle.roomRef) {
+      closeModal();
       backToBattleLobby();
       return;
     }
-    battleResultShown = false;
-    battle.roomRef.child(battle.mySlot).update({
-      guesses: 0,
-      solved: false,
-      done: false
-    });
-    if (battle.mySlot === 'p1') {
-      battle.roomRef.child('firstTurn').once('value', function (snap) {
-        var lastFirst = snap.val() || 'p1';
-        var nextFirst = lastFirst === 'p1' ? 'p2' : 'p1';
-        battle.roomRef.update({
-          p1Secret: null,
-          p2Secret: null,
-          winner: null,
-          turn: null,
-          firstTurn: nextFirst
-        });
-        startSecretSelection();
-      });
-    } else {
-      startSecretSelection();
+    battle.roomRef.child('rematch/' + battle.mySlot).set(true);
+    var btn = document.querySelector('.btn-new');
+    if (btn) {
+      btn.textContent = 'Waiting for opponent\u2026';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
     }
   };
 
@@ -663,7 +731,7 @@
 
   function renderTrackerDots(container, guessCount, solved, failed) {
     container.innerHTML = '';
-    var dotCount = game.mode === 'battle' ? Math.max(MAX_GUESSES, guessCount + (!solved && !failed ? 1 : 0)) : MAX_GUESSES;
+    var dotCount = isUnlimited() ? Math.max(MAX_GUESSES, guessCount + (!solved && !failed ? 1 : 0)) : MAX_GUESSES;
     for (var i = 0; i < dotCount; i++) {
       var dot = document.createElement('div');
       dot.className = 'tracker-dot';
@@ -701,6 +769,12 @@
         dom.keypad.style.opacity = '0.4';
         dom.keypad.style.pointerEvents = 'auto';
       }
+    } else if (battle.active && game.gameOver && !battleResultShown) {
+      turnBanner.textContent = 'WAITING FOR OPPONENT...';
+      turnBanner.style.backgroundColor = 'var(--evaluation-bg)';
+      turnBanner.style.color = 'var(--text-dim)';
+      dom.keypad.style.opacity = '0.4';
+      dom.keypad.style.pointerEvents = 'none';
     } else {
       turnBanner.innerHTML = '&nbsp;';
       turnBanner.style.backgroundColor = 'transparent';
@@ -751,7 +825,7 @@
 
   function buildBoard() {
     dom.board.innerHTML = '';
-    var targetRows = game.mode === 'battle' ? Math.max(MAX_GUESSES, (game.guesses ? game.guesses.length : 0) + 1) : MAX_GUESSES;
+    var targetRows = MAX_GUESSES;
     for (var r = 0; r < targetRows; r++) {
       ensureRowExists(r);
     }
@@ -835,7 +909,7 @@
 
   function renderCurrentRow() {
     var r = game.currentRow;
-    if (r >= MAX_GUESSES && !isUnlimited() && game.mode !== 'battle') return;
+    if (r >= MAX_GUESSES && !isUnlimited()) return;
     for (var c = 0; c < NUM_DIGITS; c++) {
       var cell = getCellEl(r, c);
       if (!cell) continue;
@@ -1000,11 +1074,44 @@
 
   window.backToBattleLobby = function () {
     closeModal();
+    if (battle.roomRef) {
+      battle.roomRef.child('rematch').off();
+      if (battle.mySlot) battle.roomRef.child('rematch/' + battle.mySlot).remove();
+    }
     if (battle.roomRef && battle.mySlot) {
       battle.roomRef.child(battle.mySlot).remove();
     }
     resetBattleState();
     showBattleLobby();
+  };
+
+  function showSettings() {
+    function row(label, isOn, key) {
+      return '<div class="settings-row" onclick="toggleSetting(\'' + key + '\')">' +
+        '<span class="settings-row-label">' + label + '</span>' +
+        '<div class="toggle-switch" style="pointer-events:none">' +
+        '<span class="toggle-slider' + (isOn ? ' is-on' : '') + '"></span>' +
+        '</div>' +
+        '</div>';
+    }
+    openModal(
+      '<button class="modal-close" onclick="closeModal()">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+      '</button>' +
+      '<div class="modal-title">Settings</div>' +
+      '<div class="modal-section"><h3>Practice &amp; Battle</h3>' +
+      row('Unlimited guesses', dom.unlimitedToggle.checked, 'unlimited') +
+      row('Allow duplicates', dom.duplicatesToggle.checked, 'duplicates') +
+      '</div>' +
+      '<button class="modal-btn btn-close" onclick="closeModal()">Done</button>'
+    );
+  }
+
+  window.toggleSetting = function (key) {
+    var input = key === 'unlimited' ? dom.unlimitedToggle : dom.duplicatesToggle;
+    input.checked = !input.checked;
+    input.dispatchEvent(new Event('change'));
+    showSettings();
   };
 
   function showHelp() {
@@ -1344,6 +1451,7 @@
   //  EVENT LISTENERS
   // ================================================================
   dom.helpBtn.addEventListener('click', showHelp);
+  dom.settingsBtn.addEventListener('click', showSettings);
   dom.statsBtn.addEventListener('click', showStats);
 
   dom.dailyBtn.addEventListener('click', function () {
@@ -1415,9 +1523,17 @@
     }
   });
 
+  dom.duplicatesToggle.addEventListener('change', function () {
+    localStorage.setItem('nurdle_duplicates', dom.duplicatesToggle.checked ? '1' : '0');
+    if (game.mode === 'practice' && !game.gameOver) {
+      newGame('practice');
+    }
+  });
 
-  // Load unlimited preference
+
+  // Load preferences
   dom.unlimitedToggle.checked = localStorage.getItem('nurdle_unlimited') === '1';
+  dom.duplicatesToggle.checked = localStorage.getItem('nurdle_duplicates') === '1';
 
   // ================================================================
   //  BOOT

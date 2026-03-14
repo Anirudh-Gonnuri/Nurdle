@@ -1,23 +1,32 @@
-/* ===== PRACTICE OPTIONS ===== */
+/* ===== SETTINGS MODAL ===== */
 
-.practice-options {
-  display: flex;
-  justify-content: center;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--header-border);
-  flex-shrink: 0;
-}
-
-.toggle-label {
+.settings-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 13px 0;
   cursor: pointer;
-  font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 500;
+  border-bottom: 1px solid var(--header-border);
   user-select: none;
   -webkit-user-select: none;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.toggle-slider.is-on {
+  background: var(--green);
+}
+
+.toggle-slider.is-on::before {
+  transform: translateX(18px);
 }
 
 .toggle-switch {
@@ -211,7 +220,7 @@ header {
 .header-right {
   display: flex;
   align-items: center;
-  width: 70px;
+  width: 80px;
 }
 
 .header-right {
