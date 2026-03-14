@@ -786,6 +786,7 @@
   };
 
   function renderBattleTracker() {
+    if (battle.secretChoosing) return;
     renderTrackerDots(dom.myProgress, game.guesses.length, game.won, game.gameOver && !game.won);
     renderTrackerDots(dom.oppProgress, battle.oppGuesses, battle.oppSolved, battle.oppDone && !battle.oppSolved);
   }
