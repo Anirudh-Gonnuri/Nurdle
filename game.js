@@ -37,7 +37,9 @@
     oppDone: false,
     roomRef: null,
     secretChoosing: false,
-    customSecret: []
+    customSecret: [],
+    score: null,
+    scoreListening: false
   };
 
   var firebaseReady = false;
@@ -422,6 +424,7 @@
         unlimited: dom.unlimitedToggle.checked,
         duplicates: dom.duplicatesToggle.checked
       },
+      score: { p1: 0, p2: 0, draws: 0 },
       p1: { id: battle.playerId, guesses: 0, done: false, solved: false },
       p2: null,
       winner: null
@@ -508,6 +511,20 @@
     battle.customSecret = [];
     if (!game.keyStates) game.keyStates = {};
     for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
+
+    // Mark presence and set up disconnect handler
+    battle.roomRef.child(battle.mySlot).update({ connected: true });
+    battle.roomRef.child(battle.mySlot).onDisconnect().update({ connected: false });
+
+    // Start session score listener (once per room, not per rematch)
+    if (!battle.scoreListening) {
+      battle.scoreListening = true;
+      battle.roomRef.child('score').on('value', function (snap) {
+        battle.score = snap.val() || { p1: 0, p2: 0, draws: 0 };
+        renderBattleTracker();
+      });
+    }
+
     showView('select-secret');
     var subtitle = dom.battleSelectSecret.querySelector('.lobby-subtitle');
     if (subtitle) {
@@ -601,27 +618,36 @@
     // Both on the same round count — this round is complete for both
     if (myGuesses === oppGuesses && myGuesses > 0) {
       if (mySolved && oppSolved) {
-        // Both solved on the same round → tie
-        battle.roomRef.update({ winner: 'tie' });
+        // Both solved on the same round → tie; P1 writes draw increment
+        if (battle.mySlot === 'p1') {
+          battle.roomRef.update({ winner: 'tie', 'score/draws': firebase.database.ServerValue.increment(1) });
+        } else {
+          battle.roomRef.update({ winner: 'tie' });
+        }
         endBattle('draw');
         return;
       }
       if (mySolved && !oppSolved) {
-        // I solved, opponent didn't on same round → I win
-        battle.roomRef.update({ winner: battle.mySlot });
+        // I solved, opponent didn't on same round → I win; winner writes their score
+        var winUpdate = { winner: battle.mySlot };
+        winUpdate['score/' + battle.mySlot] = firebase.database.ServerValue.increment(1);
+        battle.roomRef.update(winUpdate);
         setTimeout(function () { endBattle('win'); }, 1600);
         return;
       }
       if (!mySolved && oppSolved) {
-        // Opponent solved, I didn't on same round → I lose
+        // Opponent solved, I didn't on same round → I lose (opponent writes their score)
         game.gameOver = true;
         setTimeout(function () { endBattle('lose'); }, 600);
         return;
       }
     }
 
-    // Both done (ran out of guesses) without either solving
+    // Both done (ran out of guesses) without either solving → draw; P1 writes draw increment
     if (myDone && !mySolved && oppDone && !oppSolved) {
+      if (battle.mySlot === 'p1') {
+        battle.roomRef.update({ 'score/draws': firebase.database.ServerValue.increment(1) });
+      }
       endBattle('draw');
       return;
     }
@@ -630,8 +656,12 @@
   function listenForBattleUpdates() {
     battle.roomRef.child(battle.oppSlot).on('value', function (snap) {
       var data = snap.val();
-      if (!data) {
-        if (battleResultShown) showToast('Opponent left the room');
+      if (!data || data.connected === false) {
+        if (!battleResultShown) {
+          battleResultShown = true;
+          showToast('Opponent disconnected');
+          setTimeout(function () { backToBattleLobby(); }, 1500);
+        }
         return;
       }
 
@@ -718,6 +748,9 @@
   }
 
   function resetBattleState() {
+    if (battle.roomRef && battle.mySlot) {
+      battle.roomRef.child(battle.mySlot).onDisconnect().cancel();
+    }
     if (battle.roomRef) {
       battle.roomRef.off();
       battle.roomRef.child(battle.mySlot).remove();
@@ -730,6 +763,8 @@
     battle.oppGuesses = 0;
     battle.oppSolved = false;
     battle.oppDone = false;
+    battle.score = null;
+    battle.scoreListening = false;
     battleResultShown = false;
   }
 
@@ -751,6 +786,24 @@
   function renderBattleTracker() {
     renderTrackerDots(dom.myProgress, game.guesses.length, game.won, game.gameOver && !game.won);
     renderTrackerDots(dom.oppProgress, battle.oppGuesses, battle.oppSolved, battle.oppDone && !battle.oppSolved);
+
+    var scoreEl = document.getElementById('battleSessionScore');
+    if (!scoreEl) {
+      scoreEl = document.createElement('div');
+      scoreEl.id = 'battleSessionScore';
+      scoreEl.className = 'session-score';
+      dom.battleTracker.appendChild(scoreEl);
+    }
+    if (battle.score) {
+      var myScore = battle.mySlot === 'p1' ? battle.score.p1 : battle.score.p2;
+      var oppScore = battle.mySlot === 'p1' ? battle.score.p2 : battle.score.p1;
+      var draws = battle.score.draws || 0;
+      var scoreText = myScore + ' — ' + oppScore;
+      if (draws > 0) scoreText += ' · ' + draws + (draws === 1 ? ' draw' : ' draws');
+      scoreEl.textContent = scoreText;
+    } else {
+      scoreEl.textContent = '';
+    }
   }
 
   function renderTrackerDots(container, guessCount, solved, failed) {
@@ -1098,6 +1151,9 @@
 
   window.backToBattleLobby = function () {
     closeModal();
+    if (battle.roomRef && battle.mySlot) {
+      battle.roomRef.child(battle.mySlot).onDisconnect().cancel();
+    }
     if (battle.roomRef) {
       battle.roomRef.child('rematch').off();
       if (battle.mySlot) battle.roomRef.child('rematch/' + battle.mySlot).remove();
@@ -1249,6 +1305,30 @@
     var myScoreClass = result === 'win' ? 'win-score' : (result === 'lose' ? 'lose-score' : '');
     var oppScoreClass = result === 'lose' ? 'win-score' : (result === 'win' ? 'lose-score' : '');
 
+    var sessionScoreHtml = '';
+    if (battle.score) {
+      var sMyScore = battle.mySlot === 'p1' ? battle.score.p1 : battle.score.p2;
+      var sOppScore = battle.mySlot === 'p1' ? battle.score.p2 : battle.score.p1;
+      var sDraws = battle.score.draws || 0;
+      sessionScoreHtml =
+        '<div class="session-score-modal">' +
+        '<div class="session-score-modal-item">' +
+        '<div class="session-score-modal-label">YOU</div>' +
+        '<div class="session-score-modal-value">' + sMyScore + '</div>' +
+        '</div>' +
+        '<div class="session-score-modal-sep">—</div>' +
+        '<div class="session-score-modal-item">' +
+        '<div class="session-score-modal-label">DRAWS</div>' +
+        '<div class="session-score-modal-value">' + sDraws + '</div>' +
+        '</div>' +
+        '<div class="session-score-modal-sep">—</div>' +
+        '<div class="session-score-modal-item">' +
+        '<div class="session-score-modal-label">OPP</div>' +
+        '<div class="session-score-modal-value">' + sOppScore + '</div>' +
+        '</div>' +
+        '</div>';
+    }
+
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
       '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
@@ -1267,6 +1347,7 @@
       '<div class="score-val ' + oppScoreClass + '">' + oppText + '</div>' +
       '</div>' +
       '</div>' +
+      sessionScoreHtml +
       '<button class="modal-btn btn-new" onclick="playAgain()">Play Again</button>' +
       '<button class="modal-btn btn-close" onclick="backToBattleLobby()">Leave Room</button>'
     );

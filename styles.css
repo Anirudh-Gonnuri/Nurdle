@@ -1,5 +1,53 @@
 /* ===== SETTINGS MODAL ===== */
 
+/* ===== SESSION SCORE ===== */
+
+.session-score {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  min-height: 14px;
+}
+
+.session-score-modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--header-border);
+  border-bottom: 1px solid var(--header-border);
+  margin: 8px 0 16px;
+}
+
+.session-score-modal-item {
+  text-align: center;
+}
+
+.session-score-modal-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.session-score-modal-value {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.session-score-modal-sep {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-top: 16px;
+}
+
 .room-rules-text {
   font-size: 12px;
   font-weight: 600;
