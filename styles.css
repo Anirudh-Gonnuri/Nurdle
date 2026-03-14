@@ -1,5 +1,20 @@
 /* ===== SETTINGS MODAL ===== */
 
+.room-rules-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+.select-rules-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.3px;
+}
+
 .settings-row {
   display: flex;
   align-items: center;

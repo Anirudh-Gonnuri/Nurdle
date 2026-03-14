@@ -389,6 +389,13 @@
     return code;
   }
 
+  function getRulesText() {
+    var parts = [];
+    if (dom.unlimitedToggle.checked) parts.push('Unlimited guesses');
+    if (dom.duplicatesToggle.checked) parts.push('Duplicates allowed');
+    return parts.length ? parts.join(' · ') : 'Standard rules';
+  }
+
   function showBattleLobby() {
     game.mode = 'battle';
     updateModeButtons('battle');
@@ -411,6 +418,10 @@
       status: 'waiting',
       createdAt: firebase.database.ServerValue.TIMESTAMP,
       firstTurn: 'p1',
+      settings: {
+        unlimited: dom.unlimitedToggle.checked,
+        duplicates: dom.duplicatesToggle.checked
+      },
       p1: { id: battle.playerId, guesses: 0, done: false, solved: false },
       p2: null,
       winner: null
@@ -422,6 +433,8 @@
 
       dom.roomCodeDisplay.textContent = code;
       showView('waiting');
+      var rulesEl = document.getElementById('roomRulesDisplay');
+      if (rulesEl) rulesEl.textContent = getRulesText();
 
       listenForOpponentJoin();
     }).catch(function (err) {
@@ -448,6 +461,13 @@
       if (!room) { showToast('Room not found'); return; }
       if (room.status !== 'waiting') { showToast('Room already started'); return; }
       if (room.p1 && room.p1.id === battle.playerId) { showToast('Cannot join your own room'); return; }
+
+      if (room.settings) {
+        dom.unlimitedToggle.checked = !!room.settings.unlimited;
+        dom.duplicatesToggle.checked = !!room.settings.duplicates;
+        localStorage.setItem('nurdle_unlimited', dom.unlimitedToggle.checked ? '1' : '0');
+        localStorage.setItem('nurdle_duplicates', dom.duplicatesToggle.checked ? '1' : '0');
+      }
 
       ref.update({
         status: 'playing',
@@ -489,6 +509,10 @@
     if (!game.keyStates) game.keyStates = {};
     for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
     showView('select-secret');
+    var subtitle = dom.battleSelectSecret.querySelector('.lobby-subtitle');
+    if (subtitle) {
+      subtitle.innerHTML = 'Pick a 3-digit number for your opponent to guess.<br><span class="select-rules-text">' + getRulesText() + '</span>';
+    }
     renderSelectMode();
     dom.lockSecretBtn.disabled = false;
     dom.lockSecretBtn.textContent = 'LOCK IN NUMBER';
