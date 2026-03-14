@@ -729,6 +729,7 @@
   function doRematch() {
     closeModal();
     battleResultShown = false;
+    battle.secretChoosing = true;
     battle.roomRef.child(battle.mySlot).update({ guesses: 0, solved: false, done: false });
     if (battle.mySlot === 'p1') {
       battle.roomRef.child('firstTurn').once('value', function (snap) {
