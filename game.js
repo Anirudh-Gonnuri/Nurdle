@@ -620,12 +620,9 @@
     // Both on the same round count — this round is complete for both
     if (myGuesses === oppGuesses && myGuesses > 0) {
       if (mySolved && oppSolved) {
-        // Both solved on the same round → tie; P1 writes draw increment
-        if (battle.mySlot === 'p1') {
-          battle.roomRef.update({ winner: 'tie', 'score/draws': firebase.database.ServerValue.increment(1) });
-        } else {
-          battle.roomRef.update({ winner: 'tie' });
-        }
+        // Both solved on the same round → draw; both write same absolute value (idempotent)
+        var newDraws1 = ((battle.score && battle.score.draws) || 0) + 1;
+        battle.roomRef.update({ winner: 'draw', 'score/draws': newDraws1 });
         endBattle('draw');
         return;
       }
@@ -645,11 +642,10 @@
       }
     }
 
-    // Both done (ran out of guesses) without either solving → draw; P1 writes draw increment
+    // Both done (ran out of guesses) without either solving → draw; both write same absolute value (idempotent)
     if (myDone && !mySolved && oppDone && !oppSolved) {
-      if (battle.mySlot === 'p1') {
-        battle.roomRef.update({ 'score/draws': firebase.database.ServerValue.increment(1) });
-      }
+      var newDraws2 = ((battle.score && battle.score.draws) || 0) + 1;
+      battle.roomRef.update({ winner: 'draw', 'score/draws': newDraws2 });
       endBattle('draw');
       return;
     }
