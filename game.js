@@ -530,6 +530,8 @@
     if (subtitle) {
       subtitle.innerHTML = 'Pick a 3-digit number for your opponent to guess.<br><span class="select-rules-text">' + getRulesText() + '</span>';
     }
+    dom.keypad.style.opacity = '1';
+    dom.keypad.style.pointerEvents = 'auto';
     renderSelectMode();
     dom.lockSecretBtn.disabled = false;
     dom.lockSecretBtn.textContent = 'LOCK IN NUMBER';
