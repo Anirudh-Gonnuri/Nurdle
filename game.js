@@ -830,7 +830,7 @@
         dom.keypad.style.opacity = '0.4';
         dom.keypad.style.pointerEvents = 'auto';
       }
-    } else if (battle.active && game.gameOver && !battleResultShown) {
+    } else if (battle.active && game.gameOver && !battleResultShown && !battle.secretChoosing) {
       turnBanner.textContent = 'WAITING FOR OPPONENT...';
       turnBanner.style.backgroundColor = 'var(--evaluation-bg)';
       turnBanner.style.color = 'var(--text-dim)';
