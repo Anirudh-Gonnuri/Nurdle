@@ -64,6 +64,68 @@
     <main id="board-container">
       <div id="board"></div>
 
+      <!-- ===== LANDING PAGES ===== -->
+      <div id="landing-guest" class="hidden">
+        <div class="landing-content">
+          <div class="landing-logo">
+            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
+            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
+          </div>
+          <p class="landing-tagline">Complete the puzzle in 6 tries</p>
+          <button class="lobby-btn create-btn" id="loginBtn">LOG IN</button>
+          <div class="lobby-divider"><span>or</span></div>
+          <button class="lobby-btn join-btn" id="guestPlayBtn">GUEST</button>
+        </div>
+      </div>
+
+      <div id="landing-welcome" class="hidden">
+        <div class="landing-content">
+          <div class="landing-logo">
+            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
+            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
+          </div>
+          <h2 class="landing-heading">Welcome back</h2>
+          <p class="landing-streak">Continue your <span id="streakCount" class="landing-streak-num">0</span> day streak</p>
+          <button class="lobby-btn create-btn" id="playDailyBtn">PLAY TODAY'S PUZZLE</button>
+        </div>
+      </div>
+
+      <div id="landing-continue" class="hidden">
+        <div class="landing-content">
+          <div class="landing-logo">
+            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
+            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
+          </div>
+          <h2 class="landing-heading">You're not done yet</h2>
+          <p class="landing-streak">Continue your puzzle, you have <span id="triesLeft" class="landing-streak-num">6</span> tries left</p>
+          <button class="lobby-btn create-btn" id="continueBtn">CONTINUE</button>
+        </div>
+      </div>
+
+      <div id="landing-won" class="hidden">
+        <div class="landing-content">
+          <div class="landing-logo">
+            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
+            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
+          </div>
+          <h2 class="landing-heading">Brilliant!</h2>
+          <p class="landing-streak">You cracked today's puzzle</p>
+          <button class="lobby-btn create-btn" id="admireWonBtn">ADMIRE PUZZLE</button>
+        </div>
+      </div>
+
+      <div id="landing-lost" class="hidden">
+        <div class="landing-content">
+          <div class="landing-logo">
+            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
+            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
+          </div>
+          <h2 class="landing-heading">Better luck tomorrow</h2>
+          <p class="landing-streak">The puzzle got the best of you today</p>
+          <button class="lobby-btn create-btn" id="admireLostBtn">VIEW PUZZLE</button>
+        </div>
+      </div>
+
       <div id="battle-lobby" class="hidden">
         <div class="lobby-content">
           <div class="lobby-icon">
@@ -124,6 +186,7 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
   <script src="game.js"></script>
 </body>
