@@ -43,7 +43,6 @@
   };
 
   var firebaseReady = false;
-  var currentUser = null;
 
   // ================================================================
   //  DOM REFERENCES
@@ -79,14 +78,7 @@
     lockSecretBtn: document.getElementById('lockSecretBtn'),
     countdownBig: document.getElementById('countdownBig'),
     myProgress: document.getElementById('myProgress'),
-    oppProgress: document.getElementById('oppProgress'),
-    landingGuest: document.getElementById('landing-guest'),
-    landingWelcome: document.getElementById('landing-welcome'),
-    landingContinue: document.getElementById('landing-continue'),
-    landingWon: document.getElementById('landing-won'),
-    landingLost: document.getElementById('landing-lost'),
-    streakCount: document.getElementById('streakCount'),
-    triesLeft: document.getElementById('triesLeft')
+    oppProgress: document.getElementById('oppProgress')
   };
 
   // Helper function to check if unlimited mode is active
@@ -184,17 +176,8 @@
     dom.battleWaiting.classList.toggle('hidden', view !== 'waiting');
     dom.battleSelectSecret.classList.toggle('hidden', view !== 'select-secret');
     dom.battleCountdown.classList.toggle('hidden', view !== 'countdown');
-    dom.landingGuest.classList.toggle('hidden', view !== 'landing-guest');
-    dom.landingWelcome.classList.toggle('hidden', view !== 'landing-welcome');
-    dom.landingContinue.classList.toggle('hidden', view !== 'landing-continue');
-    dom.landingWon.classList.toggle('hidden', view !== 'landing-won');
-    dom.landingLost.classList.toggle('hidden', view !== 'landing-lost');
     dom.keypadContainer.classList.toggle('hidden', view !== 'game' && view !== 'select-secret');
     dom.battleTracker.classList.toggle('hidden', !(view === 'game' && battle.active));
-
-    var isLanding = view.indexOf('landing') === 0;
-    document.querySelector('.mode-nav').classList.toggle('hidden', isLanding);
-    document.querySelector('header').classList.toggle('hidden', isLanding);
   }
 
   function updateModeButtons(mode) {
@@ -396,298 +379,6 @@
     } catch (e) {
       console.error('Firebase init error:', e);
       return false;
-    }
-  }
-
-  // ================================================================
-  //  AUTH
-  // ================================================================
-  var googleProvider = null;
-
-  function initAuth() {
-    if (!initFirebase()) return;
-    googleProvider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().onAuthStateChanged(function (user) {
-      currentUser = user;
-      onAuthStateChanged(user);
-    });
-  }
-
-  function onAuthStateChanged(user) {
-    if (user) {
-      migrateGuestData();
-      syncFromCloud(function () {
-        showLandingForUser();
-      });
-    } else {
-      showView('landing-guest');
-    }
-  }
-
-  function getDailyState() {
-    var puzzleNum = getPuzzleNumber();
-    var saved = loadDaily();
-    if (!saved || saved.puzzleNum !== puzzleNum) return 'none';
-    if (saved.gameOver && saved.won) return 'won';
-    if (saved.gameOver && !saved.won) return 'lost';
-    return 'in-progress';
-  }
-
-  function showLandingForUser() {
-    var state = getDailyState();
-    var stats = loadStats();
-    if (state === 'won') {
-      showView('landing-won');
-    } else if (state === 'lost') {
-      showView('landing-lost');
-    } else if (state === 'in-progress') {
-      var saved = loadDaily();
-      var tries = MAX_GUESSES - (saved ? saved.currentRow : 0);
-      dom.triesLeft.textContent = tries;
-      showView('landing-continue');
-    } else {
-      dom.streakCount.textContent = stats.currentStreak;
-      showView('landing-welcome');
-    }
-  }
-
-  // ================================================================
-  //  GUEST DATA MIGRATION
-  // ================================================================
-  function migrateGuestData() {
-    if (!currentUser) return;
-
-    var guestStatsRaw = localStorage.getItem('nurdle_stats');
-    var guestDailyRaw = localStorage.getItem('nurdle_daily');
-    var hasGuestStats = false;
-    var hasGuestDaily = false;
-
-    // Migrate stats
-    if (guestStatsRaw) {
-      try {
-        var guestStats = JSON.parse(guestStatsRaw);
-        if (guestStats && guestStats.distribution && guestStats.gamesPlayed > 0) {
-          hasGuestStats = true;
-          var userStats = loadStats();
-          var merged = mergeStats(userStats, guestStats);
-          saveStats(merged);
-        }
-      } catch (e) { /* ignore */ }
-    }
-
-    // Migrate daily
-    if (guestDailyRaw) {
-      try {
-        var guestDaily = JSON.parse(guestDailyRaw);
-        var puzzleNum = getPuzzleNumber();
-        if (guestDaily && guestDaily.puzzleNum === puzzleNum) {
-          hasGuestDaily = true;
-          var userDaily = loadDaily();
-          if (!userDaily || userDaily.puzzleNum !== puzzleNum || guestDaily.currentRow > userDaily.currentRow) {
-            localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(guestDaily));
-          }
-        }
-      } catch (e) { /* ignore */ }
-    }
-
-    // Wipe guest keys after migration
-    if (hasGuestStats) localStorage.removeItem('nurdle_stats');
-    if (hasGuestDaily) localStorage.removeItem('nurdle_daily');
-  }
-
-  // ================================================================
-  //  CLOUD SYNC
-  // ================================================================
-  function cloudRef(path) {
-    return firebase.database().ref('users/' + currentUser.uid + '/' + path);
-  }
-
-  function syncFromCloud(callback) {
-    if (!currentUser || !firebaseReady) { callback(); return; }
-
-    var done = 0;
-    var total = 2;
-    function check() { if (++done === total) callback(); }
-
-    // Sync stats
-    cloudRef('stats').once('value', function (snap) {
-      var cloud = snap.val();
-      var local = loadStats();
-      if (cloud && cloud.distribution) {
-        var merged = mergeStats(local, cloud);
-        saveStats(merged);
-        cloudRef('stats').set(merged);
-      } else {
-        if (local.gamesPlayed > 0) cloudRef('stats').set(local);
-      }
-      check();
-    }, function () { check(); });
-
-    // Sync daily
-    cloudRef('daily').once('value', function (snap) {
-      var cloud = snap.val();
-      var local = loadDaily();
-      var puzzleNum = getPuzzleNumber();
-
-      var cloudValid = cloud && cloud.puzzleNum === puzzleNum;
-      var localValid = local && local.puzzleNum === puzzleNum;
-
-      if (cloudValid && localValid) {
-        // Use whichever has more progress
-        if (cloud.currentRow > local.currentRow) {
-          localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(cloud));
-        } else {
-          cloudRef('daily').set(local);
-        }
-      } else if (cloudValid && !localValid) {
-        localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(cloud));
-      } else if (!cloudValid && localValid) {
-        cloudRef('daily').set(local);
-      }
-      check();
-    }, function () { check(); });
-  }
-
-  function mergeStats(a, b) {
-    var dist = [];
-    for (var i = 0; i < 6; i++) {
-      dist.push(Math.max(a.distribution[i] || 0, b.distribution[i] || 0));
-    }
-    return {
-      gamesPlayed: Math.max(a.gamesPlayed || 0, b.gamesPlayed || 0),
-      gamesWon: Math.max(a.gamesWon || 0, b.gamesWon || 0),
-      currentStreak: Math.max(a.currentStreak || 0, b.currentStreak || 0),
-      maxStreak: Math.max(a.maxStreak || 0, b.maxStreak || 0),
-      distribution: dist
-    };
-  }
-
-  function saveToCloud(path, data) {
-    if (!currentUser || !firebaseReady) return;
-    cloudRef(path).set(data);
-  }
-
-  function signInWithGoogle() {
-    return firebase.auth().signInWithPopup(googleProvider);
-  }
-
-  function signUpWithEmail(email, password) {
-    return firebase.auth().createUserWithEmailAndPassword(email, password);
-  }
-
-  function signInWithEmail(email, password) {
-    return firebase.auth().signInWithEmailAndPassword(email, password);
-  }
-
-  function signOut() {
-    return firebase.auth().signOut();
-  }
-
-  function showAuthModal() {
-    openModal(
-      '<button class="modal-close" onclick="closeModal()">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">Log In</div>' +
-      '<button class="auth-google-btn" id="googleSignInBtn">' +
-        '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
-        '<span>Continue with Google</span>' +
-      '</button>' +
-      '<div class="lobby-divider"><span>or</span></div>' +
-      '<div class="auth-tabs">' +
-        '<button class="auth-tab active" id="authTabLogin">Log In</button>' +
-        '<button class="auth-tab" id="authTabSignup">Sign Up</button>' +
-      '</div>' +
-      '<form id="authForm" autocomplete="on">' +
-        '<input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="email" required>' +
-        '<input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" required>' +
-        '<div id="authError" class="auth-error"></div>' +
-        '<button type="submit" class="auth-submit-btn" id="authSubmitBtn">LOG IN</button>' +
-      '</form>'
-    );
-
-    var isLogin = true;
-    var tabLogin = document.getElementById('authTabLogin');
-    var tabSignup = document.getElementById('authTabSignup');
-    var submitBtn = document.getElementById('authSubmitBtn');
-    var form = document.getElementById('authForm');
-    var emailInput = document.getElementById('authEmail');
-    var passwordInput = document.getElementById('authPassword');
-    var errorEl = document.getElementById('authError');
-
-    tabLogin.addEventListener('click', function () {
-      isLogin = true;
-      tabLogin.classList.add('active');
-      tabSignup.classList.remove('active');
-      submitBtn.textContent = 'LOG IN';
-      passwordInput.autocomplete = 'current-password';
-      errorEl.textContent = '';
-    });
-
-    tabSignup.addEventListener('click', function () {
-      isLogin = false;
-      tabSignup.classList.add('active');
-      tabLogin.classList.remove('active');
-      submitBtn.textContent = 'SIGN UP';
-      passwordInput.autocomplete = 'new-password';
-      errorEl.textContent = '';
-    });
-
-    document.getElementById('googleSignInBtn').addEventListener('click', function () {
-      signInWithGoogle().then(function () {
-        closeModal();
-      }).catch(function (err) {
-        if (err.code !== 'auth/popup-closed-by-user') {
-          errorEl.textContent = friendlyAuthError(err.code);
-        }
-      });
-    });
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var email = emailInput.value.trim();
-      var password = passwordInput.value;
-      errorEl.textContent = '';
-
-      if (!isValidEmail(email)) {
-        errorEl.textContent = 'Please enter a valid email address';
-        return;
-      }
-      if (password.length < 6) {
-        errorEl.textContent = 'Password must be at least 6 characters';
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = isLogin ? 'LOGGING IN...' : 'SIGNING UP...';
-
-      var authFn = isLogin ? signInWithEmail(email, password) : signUpWithEmail(email, password);
-      authFn.then(function () {
-        closeModal();
-      }).catch(function (err) {
-        errorEl.textContent = friendlyAuthError(err.code);
-        submitBtn.disabled = false;
-        submitBtn.textContent = isLogin ? 'LOG IN' : 'SIGN UP';
-      });
-    });
-  }
-
-  function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  function friendlyAuthError(code) {
-    switch (code) {
-      case 'auth/invalid-email': return 'Invalid email address';
-      case 'auth/user-disabled': return 'This account has been disabled';
-      case 'auth/user-not-found': return 'No account found with this email';
-      case 'auth/wrong-password': return 'Incorrect password';
-      case 'auth/invalid-credential': return 'Incorrect email or password';
-      case 'auth/email-already-in-use': return 'An account with this email already exists';
-      case 'auth/weak-password': return 'Password must be at least 6 characters';
-      case 'auth/too-many-requests': return 'Too many attempts. Try again later';
-      case 'auth/network-request-failed': return 'Network error. Check your connection';
-      default: return 'Something went wrong. Please try again';
     }
   }
 
@@ -1439,16 +1130,6 @@
   window.closeModal = closeModal;
   window.shareResult = shareResult;
 
-  window.handleSignOut = function () {
-    closeModal();
-    signOut();
-  };
-
-  window.handleLoginFromSettings = function () {
-    closeModal();
-    showAuthModal();
-  };
-
   window.newPracticeGame = function () {
     closeModal();
     newGame('practice');
@@ -1479,23 +1160,6 @@
         '</div>' +
         '</div>';
     }
-    var accountSection = '';
-    if (currentUser) {
-      var displayName = currentUser.email || currentUser.displayName || 'Google account';
-      accountSection =
-        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-        '<div class="modal-section"><h3>Account</h3>' +
-        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">' + displayName + '</p>' +
-        '<button class="modal-btn btn-close" onclick="handleSignOut()" style="color:var(--red);border-color:var(--red)">Sign Out</button>' +
-        '</div>';
-    } else {
-      accountSection =
-        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-        '<div class="modal-section"><h3>Account</h3>' +
-        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">Playing as guest</p>' +
-        '<button class="modal-btn btn-share" onclick="handleLoginFromSettings()">Log In</button>' +
-        '</div>';
-    }
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
       '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
@@ -1505,7 +1169,6 @@
       row('Unlimited guesses', dom.unlimitedToggle.checked, 'unlimited') +
       row('Allow duplicates', dom.duplicatesToggle.checked, 'duplicates') +
       '</div>' +
-      accountSection +
       '<button class="modal-btn btn-close" onclick="closeModal()">Done</button>'
     );
   }
@@ -1800,13 +1463,9 @@
   // ================================================================
   //  LOCAL STORAGE
   // ================================================================
-  function storageKey(base) {
-    return currentUser ? base + '_' + currentUser.uid : base;
-  }
-
   function loadStats() {
     try {
-      var s = JSON.parse(localStorage.getItem(storageKey('nurdle_stats')));
+      var s = JSON.parse(localStorage.getItem('nurdle_stats'));
       if (s && s.distribution) return s;
     } catch (e) { /* ignore */ }
     return {
@@ -1817,8 +1476,7 @@
   }
 
   function saveStats(stats) {
-    localStorage.setItem(storageKey('nurdle_stats'), JSON.stringify(stats));
-    saveToCloud('stats', stats);
+    localStorage.setItem('nurdle_stats', JSON.stringify(stats));
   }
 
   function updateStats(won, numGuesses) {
@@ -1848,13 +1506,12 @@
       mode: 'daily',
       currentGuess: game.currentGuess
     };
-    localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(data));
-    saveToCloud('daily', data);
+    localStorage.setItem('nurdle_daily', JSON.stringify(data));
   }
 
   function loadDaily() {
     try {
-      return JSON.parse(localStorage.getItem(storageKey('nurdle_daily')));
+      return JSON.parse(localStorage.getItem('nurdle_daily'));
     } catch (e) { return null; }
   }
 
@@ -1970,31 +1627,14 @@
   dom.duplicatesToggle.checked = localStorage.getItem('nurdle_duplicates') === '1';
 
   // ================================================================
-  //  LANDING PAGE EVENTS
-  // ================================================================
-  function enterGame() {
-    newGame('daily');
-  }
-
-  document.getElementById('guestPlayBtn').addEventListener('click', enterGame);
-  document.getElementById('playDailyBtn').addEventListener('click', enterGame);
-  document.getElementById('continueBtn').addEventListener('click', enterGame);
-  document.getElementById('admireWonBtn').addEventListener('click', enterGame);
-  document.getElementById('admireLostBtn').addEventListener('click', enterGame);
-
-  document.getElementById('loginBtn').addEventListener('click', function () {
-    showAuthModal();
-  });
-
-  // ================================================================
   //  BOOT
   // ================================================================
-  initAuth();
   buildBoard();
   buildKeypad();
-  showView('landing-guest');
+  newGame('daily');
 
   if (!localStorage.getItem('nurdle_visited')) {
     localStorage.setItem('nurdle_visited', '1');
+    setTimeout(showHelp, 500);
   }
 })();
