@@ -79,6 +79,11 @@ changes go in their own commit, separate from behavioural changes.
 
 - Fill in the PR template.
 - Keep PRs small enough to review in one sitting.
+- **Stacked PRs** (a PR whose base is another work branch): merge the bottom
+  PR first, then change the next PR's base to `dev` _before_ merging it.
+  Merging a stacked PR while its base is still the old work branch lands
+  the changes on that branch instead of `dev`. Enabling "Automatically
+  delete head branches" makes GitHub retarget stacked PRs for you.
 - CI must pass before merging.
 - Resolve all review conversations before merging.
 
