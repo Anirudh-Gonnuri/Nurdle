@@ -1588,7 +1588,7 @@
         '</div>'
       );
     }
-    var accountSection = '';
+    var accountSection;
     if (currentUser) {
       var displayName = currentUser.email || currentUser.displayName || 'Google account';
       accountSection =
