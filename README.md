@@ -21,6 +21,17 @@ Play it here: [https://nurdle.vercel.app](https://nurdle.vercel.app)
 - **Practice** -- Unlimited random puzzles.
 - **Battle** -- Real-time multiplayer. Create or join a room, pick a secret number for your opponent, and take turns guessing. First to solve wins.
 
+## Development
+
+```sh
+nvm use          # Node 24
+npm install
+npm run dev      # http://localhost:3000
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching model, commit
+conventions and available scripts.
+
 ## License
 
-MIT
+[MIT](LICENSE)
