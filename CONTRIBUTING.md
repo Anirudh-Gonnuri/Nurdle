@@ -79,5 +79,27 @@ changes go in their own commit, separate from behavioural changes.
 
 - Fill in the PR template.
 - Keep PRs small enough to review in one sitting.
+- **Stacked PRs** (a PR whose base is another work branch): merge the bottom
+  PR first, then change the next PR's base to `dev` _before_ merging it.
+  Merging a stacked PR while its base is still the old work branch lands
+  the changes on that branch instead of `dev`. Enabling "Automatically
+  delete head branches" makes GitHub retarget stacked PRs for you.
 - CI must pass before merging.
 - Resolve all review conversations before merging.
+
+## Continuous integration
+
+GitHub Actions runs on every pull request and on pushes to `main` and `dev`.
+The checks marked required must pass before a PR can be merged.
+
+| Workflow            | Job               | What it checks                                               |
+| ------------------- | ----------------- | ------------------------------------------------------------ |
+| `ci.yml`            | Lint & format     | `npm run lint` and `npm run format:check`                    |
+| `ci.yml`            | Commit messages   | Every commit in the PR follows Conventional Commits          |
+| `dependency-review` | Dependency review | New dependencies have no moderate+ CVEs or GPL/AGPL licences |
+
+To reproduce a CI failure locally, run `npm ci && npm run check`.
+
+Dependabot opens weekly update PRs against `dev` for npm packages and
+GitHub Actions. Actions are pinned to full commit SHAs; Dependabot keeps
+both the SHA and the version comment up to date.

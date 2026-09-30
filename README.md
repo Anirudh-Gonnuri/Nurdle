@@ -1,5 +1,7 @@
 # Nurdle
 
+[![CI](https://github.com/Anirudh-Gonnuri/Nurdle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Anirudh-Gonnuri/Nurdle/actions/workflows/ci.yml)
+
 A daily number-guessing game inspired by Wordle. Instead of words, you guess a 3-digit number with all unique digits. After each guess, colored feedback dots tell you how many digits are correct, misplaced, or absent -- but not which ones.
 
 Play it here: [https://nurdle.vercel.app](https://nurdle.vercel.app)
