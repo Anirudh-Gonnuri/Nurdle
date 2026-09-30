@@ -81,3 +81,20 @@ changes go in their own commit, separate from behavioural changes.
 - Keep PRs small enough to review in one sitting.
 - CI must pass before merging.
 - Resolve all review conversations before merging.
+
+## Continuous integration
+
+GitHub Actions runs on every pull request and on pushes to `main` and `dev`.
+The checks marked required must pass before a PR can be merged.
+
+| Workflow            | Job               | What it checks                                               |
+| ------------------- | ----------------- | ------------------------------------------------------------ |
+| `ci.yml`            | Lint & format     | `npm run lint` and `npm run format:check`                    |
+| `ci.yml`            | Commit messages   | Every commit in the PR follows Conventional Commits          |
+| `dependency-review` | Dependency review | New dependencies have no moderate+ CVEs or GPL/AGPL licences |
+
+To reproduce a CI failure locally, run `npm ci && npm run check`.
+
+Dependabot opens weekly update PRs against `dev` for npm packages and
+GitHub Actions. Actions are pinned to full commit SHAs; Dependabot keeps
+both the SHA and the version comment up to date.
