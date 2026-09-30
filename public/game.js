@@ -488,7 +488,7 @@
           var merged = mergeStats(userStats, guestStats);
           saveStats(merged);
         }
-      } catch (e) {
+      } catch {
         /* ignore */
       }
     }
@@ -509,7 +509,7 @@
             localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(guestDaily));
           }
         }
-      } catch (e) {
+      } catch {
         /* ignore */
       }
     }
@@ -1981,7 +1981,7 @@
     try {
       var s = JSON.parse(localStorage.getItem(storageKey('nurdle_stats')));
       if (s && s.distribution) return s;
-    } catch (e) {
+    } catch {
       /* ignore */
     }
     return {
@@ -2032,7 +2032,7 @@
   function loadDaily() {
     try {
       return JSON.parse(localStorage.getItem(storageKey('nurdle_daily')));
-    } catch (e) {
+    } catch {
       return null;
     }
   }
