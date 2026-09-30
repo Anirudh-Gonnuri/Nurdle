@@ -5,13 +5,13 @@
   //  FIREBASE CONFIG
   // ================================================================
   var FIREBASE_CONFIG = {
-    apiKey: "AIzaSyAwWzu1S6Uj4xpxCR0IQAv92kBI3xUgL5U",
-    authDomain: "nurdle-aa83c.firebaseapp.com",
-    databaseURL: "https://nurdle-aa83c-default-rtdb.firebaseio.com",
-    projectId: "nurdle-aa83c",
-    storageBucket: "nurdle-aa83c.firebasestorage.app",
-    messagingSenderId: "838521593900",
-    appId: "1:838521593900:web:73ca45a9fa24dd3e0b7189"
+    apiKey: 'AIzaSyAwWzu1S6Uj4xpxCR0IQAv92kBI3xUgL5U',
+    authDomain: 'nurdle-aa83c.firebaseapp.com',
+    databaseURL: 'https://nurdle-aa83c-default-rtdb.firebaseio.com',
+    projectId: 'nurdle-aa83c',
+    storageBucket: 'nurdle-aa83c.firebasestorage.app',
+    messagingSenderId: '838521593900',
+    appId: '1:838521593900:web:73ca45a9fa24dd3e0b7189',
   };
 
   // ================================================================
@@ -39,7 +39,7 @@
     secretChoosing: false,
     customSecret: [],
     score: null,
-    scoreListening: false
+    scoreListening: false,
   };
 
   var firebaseReady = false;
@@ -86,7 +86,7 @@
     landingWon: document.getElementById('landing-won'),
     landingLost: document.getElementById('landing-lost'),
     streakCount: document.getElementById('streakCount'),
-    triesLeft: document.getElementById('triesLeft')
+    triesLeft: document.getElementById('triesLeft'),
   };
 
   // Helper function to check if unlimited mode is active
@@ -98,7 +98,6 @@
   function allowDuplicates() {
     return (game.mode === 'practice' || game.mode === 'battle') && dom.duplicatesToggle.checked;
   }
-
 
   // ================================================================
   //  SEEDED RANDOM
@@ -148,16 +147,25 @@
   //  GAME LOGIC
   // ================================================================
   function checkGuess(guess, secret) {
-    var correct = 0, wrongPos = 0;
-    var s = secret.slice(), g = guess.slice();
+    var correct = 0,
+      wrongPos = 0;
+    var s = secret.slice(),
+      g = guess.slice();
     var i;
     for (i = 0; i < NUM_DIGITS; i++) {
-      if (g[i] === s[i]) { correct++; s[i] = -1; g[i] = -2; }
+      if (g[i] === s[i]) {
+        correct++;
+        s[i] = -1;
+        g[i] = -2;
+      }
     }
     for (i = 0; i < NUM_DIGITS; i++) {
       if (g[i] >= 0) {
         var idx = s.indexOf(g[i]);
-        if (idx !== -1) { wrongPos++; s[idx] = -1; }
+        if (idx !== -1) {
+          wrongPos++;
+          s[idx] = -1;
+        }
       }
     }
     return { correct: correct, wrongPos: wrongPos, absent: NUM_DIGITS - correct - wrongPos };
@@ -218,7 +226,7 @@
       gameOver: false,
       won: false,
       keyStates: {},
-      startTime: Date.now()
+      startTime: Date.now(),
     };
     for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
 
@@ -244,13 +252,21 @@
   // ================================================================
   function inputDigit(d) {
     if (battle.secretChoosing) {
-      if (battle.customSecret.length < NUM_DIGITS && (allowDuplicates() || battle.customSecret.indexOf(d) === -1)) {
+      if (
+        battle.customSecret.length < NUM_DIGITS &&
+        (allowDuplicates() || battle.customSecret.indexOf(d) === -1)
+      ) {
         battle.customSecret.push(d);
         renderSelectMode();
       }
       return;
     }
-    if (game.gameOver || game.currentGuess.length >= NUM_DIGITS || (!allowDuplicates() && game.currentGuess.indexOf(d) !== -1)) return;
+    if (
+      game.gameOver ||
+      game.currentGuess.length >= NUM_DIGITS ||
+      (!allowDuplicates() && game.currentGuess.indexOf(d) !== -1)
+    )
+      return;
     game.currentGuess.push(d);
     renderCurrentRow();
     var cell = getCellEl(game.currentRow, game.currentGuess.length - 1);
@@ -472,7 +488,9 @@
           var merged = mergeStats(userStats, guestStats);
           saveStats(merged);
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
     }
 
     // Migrate daily
@@ -483,11 +501,17 @@
         if (guestDaily && guestDaily.puzzleNum === puzzleNum) {
           hasGuestDaily = true;
           var userDaily = loadDaily();
-          if (!userDaily || userDaily.puzzleNum !== puzzleNum || guestDaily.currentRow > userDaily.currentRow) {
+          if (
+            !userDaily ||
+            userDaily.puzzleNum !== puzzleNum ||
+            guestDaily.currentRow > userDaily.currentRow
+          ) {
             localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(guestDaily));
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
     }
 
     // Wipe guest keys after migration
@@ -503,49 +527,66 @@
   }
 
   function syncFromCloud(callback) {
-    if (!currentUser || !firebaseReady) { callback(); return; }
+    if (!currentUser || !firebaseReady) {
+      callback();
+      return;
+    }
 
     var done = 0;
     var total = 2;
-    function check() { if (++done === total) callback(); }
+    function check() {
+      if (++done === total) callback();
+    }
 
     // Sync stats
-    cloudRef('stats').once('value', function (snap) {
-      var cloud = snap.val();
-      var local = loadStats();
-      if (cloud && cloud.distribution) {
-        var merged = mergeStats(local, cloud);
-        saveStats(merged);
-        cloudRef('stats').set(merged);
-      } else {
-        if (local.gamesPlayed > 0) cloudRef('stats').set(local);
+    cloudRef('stats').once(
+      'value',
+      function (snap) {
+        var cloud = snap.val();
+        var local = loadStats();
+        if (cloud && cloud.distribution) {
+          var merged = mergeStats(local, cloud);
+          saveStats(merged);
+          cloudRef('stats').set(merged);
+        } else {
+          if (local.gamesPlayed > 0) cloudRef('stats').set(local);
+        }
+        check();
+      },
+      function () {
+        check();
       }
-      check();
-    }, function () { check(); });
+    );
 
     // Sync daily
-    cloudRef('daily').once('value', function (snap) {
-      var cloud = snap.val();
-      var local = loadDaily();
-      var puzzleNum = getPuzzleNumber();
+    cloudRef('daily').once(
+      'value',
+      function (snap) {
+        var cloud = snap.val();
+        var local = loadDaily();
+        var puzzleNum = getPuzzleNumber();
 
-      var cloudValid = cloud && cloud.puzzleNum === puzzleNum;
-      var localValid = local && local.puzzleNum === puzzleNum;
+        var cloudValid = cloud && cloud.puzzleNum === puzzleNum;
+        var localValid = local && local.puzzleNum === puzzleNum;
 
-      if (cloudValid && localValid) {
-        // Use whichever has more progress
-        if (cloud.currentRow > local.currentRow) {
+        if (cloudValid && localValid) {
+          // Use whichever has more progress
+          if (cloud.currentRow > local.currentRow) {
+            localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(cloud));
+          } else {
+            cloudRef('daily').set(local);
+          }
+        } else if (cloudValid && !localValid) {
           localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(cloud));
-        } else {
+        } else if (!cloudValid && localValid) {
           cloudRef('daily').set(local);
         }
-      } else if (cloudValid && !localValid) {
-        localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(cloud));
-      } else if (!cloudValid && localValid) {
-        cloudRef('daily').set(local);
+        check();
+      },
+      function () {
+        check();
       }
-      check();
-    }, function () { check(); });
+    );
   }
 
   function mergeStats(a, b) {
@@ -558,7 +599,7 @@
       gamesWon: Math.max(a.gamesWon || 0, b.gamesWon || 0),
       currentStreak: Math.max(a.currentStreak || 0, b.currentStreak || 0),
       maxStreak: Math.max(a.maxStreak || 0, b.maxStreak || 0),
-      distribution: dist
+      distribution: dist,
     };
   }
 
@@ -587,23 +628,23 @@
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
         '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">Log In</div>' +
-      '<button class="auth-google-btn" id="googleSignInBtn">' +
+        '</button>' +
+        '<div class="modal-title">Log In</div>' +
+        '<button class="auth-google-btn" id="googleSignInBtn">' +
         '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
         '<span>Continue with Google</span>' +
-      '</button>' +
-      '<div class="lobby-divider"><span>or</span></div>' +
-      '<div class="auth-tabs">' +
+        '</button>' +
+        '<div class="lobby-divider"><span>or</span></div>' +
+        '<div class="auth-tabs">' +
         '<button class="auth-tab active" id="authTabLogin">Log In</button>' +
         '<button class="auth-tab" id="authTabSignup">Sign Up</button>' +
-      '</div>' +
-      '<form id="authForm" autocomplete="on">' +
+        '</div>' +
+        '<form id="authForm" autocomplete="on">' +
         '<input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="email" required>' +
         '<input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" required>' +
         '<div id="authError" class="auth-error"></div>' +
         '<button type="submit" class="auth-submit-btn" id="authSubmitBtn">LOG IN</button>' +
-      '</form>'
+        '</form>'
     );
 
     var isLogin = true;
@@ -634,13 +675,15 @@
     });
 
     document.getElementById('googleSignInBtn').addEventListener('click', function () {
-      signInWithGoogle().then(function () {
-        closeModal();
-      }).catch(function (err) {
-        if (err.code !== 'auth/popup-closed-by-user') {
-          errorEl.textContent = friendlyAuthError(err.code);
-        }
-      });
+      signInWithGoogle()
+        .then(function () {
+          closeModal();
+        })
+        .catch(function (err) {
+          if (err.code !== 'auth/popup-closed-by-user') {
+            errorEl.textContent = friendlyAuthError(err.code);
+          }
+        });
     });
 
     form.addEventListener('submit', function (e) {
@@ -662,13 +705,15 @@
       submitBtn.textContent = isLogin ? 'LOGGING IN...' : 'SIGNING UP...';
 
       var authFn = isLogin ? signInWithEmail(email, password) : signUpWithEmail(email, password);
-      authFn.then(function () {
-        closeModal();
-      }).catch(function (err) {
-        errorEl.textContent = friendlyAuthError(err.code);
-        submitBtn.disabled = false;
-        submitBtn.textContent = isLogin ? 'LOG IN' : 'SIGN UP';
-      });
+      authFn
+        .then(function () {
+          closeModal();
+        })
+        .catch(function (err) {
+          errorEl.textContent = friendlyAuthError(err.code);
+          submitBtn.disabled = false;
+          submitBtn.textContent = isLogin ? 'LOG IN' : 'SIGN UP';
+        });
     });
   }
 
@@ -678,16 +723,26 @@
 
   function friendlyAuthError(code) {
     switch (code) {
-      case 'auth/invalid-email': return 'Invalid email address';
-      case 'auth/user-disabled': return 'This account has been disabled';
-      case 'auth/user-not-found': return 'No account found with this email';
-      case 'auth/wrong-password': return 'Incorrect password';
-      case 'auth/invalid-credential': return 'Incorrect email or password';
-      case 'auth/email-already-in-use': return 'An account with this email already exists';
-      case 'auth/weak-password': return 'Password must be at least 6 characters';
-      case 'auth/too-many-requests': return 'Too many attempts. Try again later';
-      case 'auth/network-request-failed': return 'Network error. Check your connection';
-      default: return 'Something went wrong. Please try again';
+      case 'auth/invalid-email':
+        return 'Invalid email address';
+      case 'auth/user-disabled':
+        return 'This account has been disabled';
+      case 'auth/user-not-found':
+        return 'No account found with this email';
+      case 'auth/wrong-password':
+        return 'Incorrect password';
+      case 'auth/invalid-credential':
+        return 'Incorrect email or password';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists';
+      case 'auth/weak-password':
+        return 'Password must be at least 6 characters';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Try again later';
+      case 'auth/network-request-failed':
+        return 'Network error. Check your connection';
+      default:
+        return 'Something went wrong. Please try again';
     }
   }
 
@@ -724,35 +779,38 @@
     var secret = randomSecret();
     var ref = firebase.database().ref('rooms/' + code);
 
-    ref.set({
-      secret: secret,
-      status: 'waiting',
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
-      firstTurn: 'p1',
-      settings: {
-        unlimited: dom.unlimitedToggle.checked,
-        duplicates: dom.duplicatesToggle.checked
-      },
-      score: { p1: 0, p2: 0, draws: 0 },
-      p1: { id: battle.playerId, guesses: 0, done: false, solved: false },
-      p2: null,
-      winner: null
-    }).then(function () {
-      battle.roomCode = code;
-      battle.mySlot = 'p1';
-      battle.oppSlot = 'p2';
-      battle.roomRef = ref;
+    ref
+      .set({
+        secret: secret,
+        status: 'waiting',
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        firstTurn: 'p1',
+        settings: {
+          unlimited: dom.unlimitedToggle.checked,
+          duplicates: dom.duplicatesToggle.checked,
+        },
+        score: { p1: 0, p2: 0, draws: 0 },
+        p1: { id: battle.playerId, guesses: 0, done: false, solved: false },
+        p2: null,
+        winner: null,
+      })
+      .then(function () {
+        battle.roomCode = code;
+        battle.mySlot = 'p1';
+        battle.oppSlot = 'p2';
+        battle.roomRef = ref;
 
-      dom.roomCodeDisplay.textContent = code;
-      showView('waiting');
-      var rulesEl = document.getElementById('roomRulesDisplay');
-      if (rulesEl) rulesEl.textContent = getRulesText();
+        dom.roomCodeDisplay.textContent = code;
+        showView('waiting');
+        var rulesEl = document.getElementById('roomRulesDisplay');
+        if (rulesEl) rulesEl.textContent = getRulesText();
 
-      listenForOpponentJoin();
-    }).catch(function (err) {
-      showToast('Failed to create room');
-      console.error(err);
-    });
+        listenForOpponentJoin();
+      })
+      .catch(function (err) {
+        showToast('Failed to create room');
+        console.error(err);
+      });
   }
 
   function joinRoom() {
@@ -768,33 +826,47 @@
     }
 
     var ref = firebase.database().ref('rooms/' + code);
-    ref.once('value').then(function (snap) {
-      var room = snap.val();
-      if (!room) { showToast('Room not found'); return; }
-      if (room.status !== 'waiting') { showToast('Room already started'); return; }
-      if (room.p1 && room.p1.id === battle.playerId) { showToast('Cannot join your own room'); return; }
+    ref
+      .once('value')
+      .then(function (snap) {
+        var room = snap.val();
+        if (!room) {
+          showToast('Room not found');
+          return;
+        }
+        if (room.status !== 'waiting') {
+          showToast('Room already started');
+          return;
+        }
+        if (room.p1 && room.p1.id === battle.playerId) {
+          showToast('Cannot join your own room');
+          return;
+        }
 
-      if (room.settings) {
-        dom.unlimitedToggle.checked = !!room.settings.unlimited;
-        dom.duplicatesToggle.checked = !!room.settings.duplicates;
-        localStorage.setItem('nurdle_unlimited', dom.unlimitedToggle.checked ? '1' : '0');
-        localStorage.setItem('nurdle_duplicates', dom.duplicatesToggle.checked ? '1' : '0');
-      }
+        if (room.settings) {
+          dom.unlimitedToggle.checked = !!room.settings.unlimited;
+          dom.duplicatesToggle.checked = !!room.settings.duplicates;
+          localStorage.setItem('nurdle_unlimited', dom.unlimitedToggle.checked ? '1' : '0');
+          localStorage.setItem('nurdle_duplicates', dom.duplicatesToggle.checked ? '1' : '0');
+        }
 
-      ref.update({
-        status: 'playing',
-        p2: { id: battle.playerId, guesses: 0, done: false, solved: false }
-      }).then(function () {
-        battle.roomCode = code;
-        battle.mySlot = 'p2';
-        battle.oppSlot = 'p1';
-        battle.roomRef = ref;
+        ref
+          .update({
+            status: 'playing',
+            p2: { id: battle.playerId, guesses: 0, done: false, solved: false },
+          })
+          .then(function () {
+            battle.roomCode = code;
+            battle.mySlot = 'p2';
+            battle.oppSlot = 'p1';
+            battle.roomRef = ref;
 
-        startSecretSelection();
+            startSecretSelection();
+          });
+      })
+      .catch(function () {
+        showToast('Error joining room');
       });
-    }).catch(function () {
-      showToast('Error joining room');
-    });
   }
 
   function cancelRoom() {
@@ -837,7 +909,10 @@
     showView('select-secret');
     var subtitle = dom.battleSelectSecret.querySelector('.lobby-subtitle');
     if (subtitle) {
-      subtitle.innerHTML = 'Pick a 3-digit number for your opponent to guess.<br><span class="select-rules-text">' + getRulesText() + '</span>';
+      subtitle.innerHTML =
+        'Pick a 3-digit number for your opponent to guess.<br><span class="select-rules-text">' +
+        getRulesText() +
+        '</span>';
     }
     dom.keypad.style.opacity = '1';
     dom.keypad.style.pointerEvents = 'auto';
@@ -867,7 +942,7 @@
         var secretToGuess = data[battle.oppSlot + 'Secret'].split('').map(Number);
 
         var firstPlayer = data.firstTurn || 'p1';
-        battle.myTurn = (battle.mySlot === firstPlayer);
+        battle.myTurn = battle.mySlot === firstPlayer;
 
         if (battle.mySlot === 'p1' && !data.turn) {
           battle.roomRef.update({ turn: firstPlayer });
@@ -889,7 +964,7 @@
       gameOver: false,
       won: false,
       keyStates: {},
-      startTime: Date.now()
+      startTime: Date.now(),
     };
     for (var i = 0; i <= 9; i++) game.keyStates[i] = 'default';
 
@@ -910,7 +985,7 @@
     battle.roomRef.child(battle.mySlot).update({
       guesses: game.guesses.length,
       solved: game.won,
-      done: game.gameOver
+      done: game.gameOver,
     });
   }
 
@@ -940,13 +1015,17 @@
         var winUpdate = { winner: battle.mySlot };
         winUpdate['score/' + battle.mySlot] = firebase.database.ServerValue.increment(1);
         battle.roomRef.update(winUpdate);
-        setTimeout(function () { endBattle('win'); }, 1600);
+        setTimeout(function () {
+          endBattle('win');
+        }, 1600);
         return;
       }
       if (!mySolved && oppSolved) {
         // Opponent solved, I didn't on same round → I lose (opponent writes their score)
         game.gameOver = true;
-        setTimeout(function () { endBattle('lose'); }, 600);
+        setTimeout(function () {
+          endBattle('lose');
+        }, 600);
         return;
       }
     }
@@ -967,7 +1046,9 @@
         if (!battleResultShown) {
           battleResultShown = true;
           showToast('Opponent disconnected');
-          setTimeout(function () { backToBattleLobby(); }, 1500);
+          setTimeout(function () {
+            backToBattleLobby();
+          }, 1500);
         }
         return;
       }
@@ -983,7 +1064,7 @@
     battle.roomRef.child('turn').on('value', function (snap) {
       var whoseTurn = snap.val();
       if (!whoseTurn) return;
-      battle.myTurn = (whoseTurn === battle.mySlot);
+      battle.myTurn = whoseTurn === battle.mySlot;
       renderBattleTracker();
     });
   }
@@ -1050,7 +1131,7 @@
           winner: null,
           turn: null,
           firstTurn: nextFirst,
-          rematch: null
+          rematch: null,
         });
         startSecretSelection();
       });
@@ -1098,12 +1179,19 @@
   function renderBattleTracker() {
     if (battle.secretChoosing) return;
     renderTrackerDots(dom.myProgress, game.guesses.length, game.won, game.gameOver && !game.won);
-    renderTrackerDots(dom.oppProgress, battle.oppGuesses, battle.oppSolved, battle.oppDone && !battle.oppSolved);
+    renderTrackerDots(
+      dom.oppProgress,
+      battle.oppGuesses,
+      battle.oppSolved,
+      battle.oppDone && !battle.oppSolved
+    );
   }
 
   function renderTrackerDots(container, guessCount, solved, failed) {
     container.innerHTML = '';
-    var dotCount = isUnlimited() ? Math.max(MAX_GUESSES, guessCount + (!solved && !failed ? 1 : 0)) : MAX_GUESSES;
+    var dotCount = isUnlimited()
+      ? Math.max(MAX_GUESSES, guessCount + (!solved && !failed ? 1 : 0))
+      : MAX_GUESSES;
     for (var i = 0; i < dotCount; i++) {
       var dot = document.createElement('div');
       dot.className = 'tracker-dot';
@@ -1123,7 +1211,8 @@
     if (!turnBanner) {
       turnBanner = document.createElement('div');
       turnBanner.id = 'battleTurnBanner';
-      turnBanner.style.cssText = 'text-align:center;padding:6px;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:8px;border-radius:4px;text-transform:uppercase;';
+      turnBanner.style.cssText =
+        'text-align:center;padding:6px;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:8px;border-radius:4px;text-transform:uppercase;';
       dom.battleTracker.appendChild(turnBanner);
     }
 
@@ -1213,7 +1302,8 @@
 
       if (k === 'del') {
         btn.classList.add('fn');
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"/></svg>';
+        btn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"/></svg>';
         btn.setAttribute('data-key', 'del');
         btn.addEventListener('click', deleteDigit);
       } else if (k === 'go') {
@@ -1232,7 +1322,9 @@
   }
 
   function setupLongPress(btn, digit) {
-    var timer = null, isLong = false, pressing = false;
+    var timer = null,
+      isLong = false,
+      pressing = false;
 
     function start(e) {
       if (e.type === 'touchstart') pressing = true;
@@ -1315,11 +1407,14 @@
     for (i = 0; i < result.absent; i++) dots.push('absent-dot');
 
     dots.forEach(function (cls, idx) {
-      setTimeout(function () {
-        var dot = document.getElementById('dot-' + row + '-' + idx);
-        dot.classList.add(cls, 'revealed');
-        dot.style.animation = 'dotReveal 0.35s ease forwards';
-      }, 150 + idx * 120);
+      setTimeout(
+        function () {
+          var dot = document.getElementById('dot-' + row + '-' + idx);
+          dot.classList.add(cls, 'revealed');
+          dot.style.animation = 'dotReveal 0.35s ease forwards';
+        },
+        150 + idx * 120
+      );
     });
 
     setTimeout(callback, 150 + dots.length * 120 + 200);
@@ -1342,7 +1437,7 @@
       var result = {
         correct: entry.correct,
         wrongPos: entry.wrongPos,
-        absent: NUM_DIGITS - entry.correct - entry.wrongPos
+        absent: NUM_DIGITS - entry.correct - entry.wrongPos,
       };
       var dots = [];
       var i;
@@ -1375,7 +1470,9 @@
     row.style.animation = 'none';
     void row.offsetWidth;
     row.style.animation = 'shake 0.6s ease';
-    setTimeout(function () { row.style.animation = ''; }, 600);
+    setTimeout(function () {
+      row.style.animation = '';
+    }, 600);
   }
 
   function celebrateWin(row) {
@@ -1400,14 +1497,16 @@
       piece.className = 'confetti-piece ' + (Math.random() > 0.5 ? 'rect' : 'circle');
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
       piece.style.left = Math.random() * 100 + '%';
-      piece.style.width = (Math.random() * 8 + 5) + 'px';
-      piece.style.height = (Math.random() * 8 + 5) + 'px';
-      piece.style.setProperty('--rot', (Math.random() * 1440 - 720) + 'deg');
-      piece.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
-      piece.style.animationDelay = (Math.random() * 0.6) + 's';
+      piece.style.width = Math.random() * 8 + 5 + 'px';
+      piece.style.height = Math.random() * 8 + 5 + 'px';
+      piece.style.setProperty('--rot', Math.random() * 1440 - 720 + 'deg');
+      piece.style.animationDuration = Math.random() * 2 + 1.5 + 's';
+      piece.style.animationDelay = Math.random() * 0.6 + 's';
       dom.confetti.appendChild(piece);
     }
-    setTimeout(function () { dom.confetti.innerHTML = ''; }, 4000);
+    setTimeout(function () {
+      dom.confetti.innerHTML = '';
+    }, 4000);
   }
 
   // ================================================================
@@ -1419,7 +1518,9 @@
     toast.className = 'toast';
     toast.textContent = msg;
     dom.toasts.appendChild(toast);
-    setTimeout(function () { if (toast.parentNode) toast.remove(); }, duration);
+    setTimeout(function () {
+      if (toast.parentNode) toast.remove();
+    }, duration);
   }
 
   // ================================================================
@@ -1472,12 +1573,20 @@
 
   function showSettings() {
     function row(label, isOn, key) {
-      return '<div class="settings-row" onclick="toggleSetting(\'' + key + '\')">' +
-        '<span class="settings-row-label">' + label + '</span>' +
+      return (
+        '<div class="settings-row" onclick="toggleSetting(\'' +
+        key +
+        '\')">' +
+        '<span class="settings-row-label">' +
+        label +
+        '</span>' +
         '<div class="toggle-switch" style="pointer-events:none">' +
-        '<span class="toggle-slider' + (isOn ? ' is-on' : '') + '"></span>' +
+        '<span class="toggle-slider' +
+        (isOn ? ' is-on' : '') +
+        '"></span>' +
         '</div>' +
-        '</div>';
+        '</div>'
+      );
     }
     var accountSection = '';
     if (currentUser) {
@@ -1485,7 +1594,9 @@
       accountSection =
         '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
         '<div class="modal-section"><h3>Account</h3>' +
-        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">' + displayName + '</p>' +
+        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">' +
+        displayName +
+        '</p>' +
         '<button class="modal-btn btn-close" onclick="handleSignOut()" style="color:var(--red);border-color:var(--red)">Sign Out</button>' +
         '</div>';
     } else {
@@ -1498,15 +1609,15 @@
     }
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">Settings</div>' +
-      '<div class="modal-section"><h3>Practice &amp; Battle</h3>' +
-      row('Unlimited guesses', dom.unlimitedToggle.checked, 'unlimited') +
-      row('Allow duplicates', dom.duplicatesToggle.checked, 'duplicates') +
-      '</div>' +
-      accountSection +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Done</button>'
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">Settings</div>' +
+        '<div class="modal-section"><h3>Practice &amp; Battle</h3>' +
+        row('Unlimited guesses', dom.unlimitedToggle.checked, 'unlimited') +
+        row('Allow duplicates', dom.duplicatesToggle.checked, 'duplicates') +
+        '</div>' +
+        accountSection +
+        '<button class="modal-btn btn-close" onclick="closeModal()">Done</button>'
     );
   }
 
@@ -1520,38 +1631,38 @@
   function showHelp() {
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">How To Play</div>' +
-      '<div class="modal-section">' +
-      '<p>Guess the secret <strong>3-digit number</strong> in 6 tries. All digits are unique (no repeats).</p>' +
-      '<p style="margin-top:8px">After each guess, feedback dots reveal how close you are — but <em>not which digit</em> they refer to.</p>' +
-      '</div>' +
-      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-      '<div class="modal-section">' +
-      '<h3>Feedback</h3>' +
-      '<div class="help-example"><div class="help-dot g"></div><span>Correct digit in the correct position</span></div>' +
-      '<div class="help-example"><div class="help-dot y"></div><span>Correct digit in the wrong position</span></div>' +
-      '<div class="help-example"><div class="help-dot a"></div><span>Digit is not in the number</span></div>' +
-      '</div>' +
-      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-      '<div class="modal-section">' +
-      '<h3>Example</h3>' +
-      '<p>Secret: <strong>4 1 8</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Guess: <strong>1 0 8</strong></p>' +
-      '<div class="help-example" style="gap:6px;border-bottom:none">' +
-      '<div class="help-dot g"></div><div class="help-dot y"></div><div class="help-dot a"></div>' +
-      '<span style="margin-left:6px">1 correct, 1 misplaced, 1 absent</span>' +
-      '</div>' +
-      '</div>' +
-      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-      '<div class="modal-section">' +
-      '<h3>Modes</h3>' +
-      '<p><strong>Daily</strong> — Same number for everyone. Resets at midnight.</p>' +
-      '<p style="margin-top:4px"><strong>Practice</strong> — Unlimited random puzzles.</p>' +
-      '<p style="margin-top:4px"><strong>Battle</strong> — Real-time multiplayer. Create or join a room, pick a secret number for your opponent, and take turns guessing. First to solve wins.</p>' +
-      '<p style="margin-top:10px;font-size:13px;color:var(--text-dim)"><strong>Tip:</strong> Long-press a key to cross it out as scratch work.</p>' +
-      '</div>' +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">How To Play</div>' +
+        '<div class="modal-section">' +
+        '<p>Guess the secret <strong>3-digit number</strong> in 6 tries. All digits are unique (no repeats).</p>' +
+        '<p style="margin-top:8px">After each guess, feedback dots reveal how close you are — but <em>not which digit</em> they refer to.</p>' +
+        '</div>' +
+        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
+        '<div class="modal-section">' +
+        '<h3>Feedback</h3>' +
+        '<div class="help-example"><div class="help-dot g"></div><span>Correct digit in the correct position</span></div>' +
+        '<div class="help-example"><div class="help-dot y"></div><span>Correct digit in the wrong position</span></div>' +
+        '<div class="help-example"><div class="help-dot a"></div><span>Digit is not in the number</span></div>' +
+        '</div>' +
+        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
+        '<div class="modal-section">' +
+        '<h3>Example</h3>' +
+        '<p>Secret: <strong>4 1 8</strong>&nbsp;&nbsp;|&nbsp;&nbsp;Guess: <strong>1 0 8</strong></p>' +
+        '<div class="help-example" style="gap:6px;border-bottom:none">' +
+        '<div class="help-dot g"></div><div class="help-dot y"></div><div class="help-dot a"></div>' +
+        '<span style="margin-left:6px">1 correct, 1 misplaced, 1 absent</span>' +
+        '</div>' +
+        '</div>' +
+        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
+        '<div class="modal-section">' +
+        '<h3>Modes</h3>' +
+        '<p><strong>Daily</strong> — Same number for everyone. Resets at midnight.</p>' +
+        '<p style="margin-top:4px"><strong>Practice</strong> — Unlimited random puzzles.</p>' +
+        '<p style="margin-top:4px"><strong>Battle</strong> — Real-time multiplayer. Create or join a room, pick a secret number for your opponent, and take turns guessing. First to solve wins.</p>' +
+        '<p style="margin-top:10px;font-size:13px;color:var(--text-dim)"><strong>Tip:</strong> Long-press a key to cross it out as scratch work.</p>' +
+        '</div>' +
+        '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
     );
   }
 
@@ -1565,7 +1676,7 @@
     var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
     var titles = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'];
-    var title = won ? (titles[tries - 1] || 'Solved!') : 'Better luck next time';
+    var title = won ? titles[tries - 1] || 'Solved!' : 'Better luck next time';
 
     var digitHtml = '';
     secret.forEach(function (d) {
@@ -1573,7 +1684,11 @@
     });
 
     var subtitle = won
-      ? 'Solved in ' + tries + (game.mode === 'practice' && dom.unlimitedToggle.checked ? ' guesses' : '/' + MAX_GUESSES) + '&nbsp;&nbsp;&middot;&nbsp;&nbsp;' + timeStr
+      ? 'Solved in ' +
+        tries +
+        (game.mode === 'practice' && dom.unlimitedToggle.checked ? ' guesses' : '/' + MAX_GUESSES) +
+        '&nbsp;&nbsp;&middot;&nbsp;&nbsp;' +
+        timeStr
       : 'The number was';
 
     var nextPuzzle = '';
@@ -1583,13 +1698,17 @@
         '<div class="countdown">Next Nurdle<br><span id="countdown-timer">--:--:--</span></div>';
     }
 
-    var puzzleNumHtml = game.mode === 'daily'
-      ? '<p style="text-align:center;font-size:11px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">Nurdle #' + game.puzzleNum + '</p>'
-      : '';
+    var puzzleNumHtml =
+      game.mode === 'daily'
+        ? '<p style="text-align:center;font-size:11px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">Nurdle #' +
+          game.puzzleNum +
+          '</p>'
+        : '';
 
     var buttons = '';
     if (won || game.mode === 'daily') {
-      buttons += '<button class="modal-btn btn-share" onclick="shareResult()">' +
+      buttons +=
+        '<button class="modal-btn btn-share" onclick="shareResult()">' +
         '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="currentColor" style="margin-right:8px"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>' +
         'Share</button>';
     }
@@ -1599,13 +1718,20 @@
 
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">' + title + '</div>' +
-      puzzleNumHtml +
-      '<div class="result-number">' + digitHtml + '</div>' +
-      '<p style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:4px">' + subtitle + '</p>' +
-      nextPuzzle + buttons
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">' +
+        title +
+        '</div>' +
+        puzzleNumHtml +
+        '<div class="result-number">' +
+        digitHtml +
+        '</div>' +
+        '<p style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:4px">' +
+        subtitle +
+        '</p>' +
+        nextPuzzle +
+        buttons
     );
 
     if (game.mode === 'daily') startNextPuzzleCountdown();
@@ -1613,9 +1739,16 @@
 
   function showBattleResultModal(result) {
     var title, tagClass;
-    if (result === 'win') { title = 'YOU WIN!'; tagClass = 'win-tag'; }
-    else if (result === 'lose') { title = 'YOU LOSE'; tagClass = 'lose-tag'; }
-    else { title = 'DRAW'; tagClass = 'draw-tag'; }
+    if (result === 'win') {
+      title = 'YOU WIN!';
+      tagClass = 'win-tag';
+    } else if (result === 'lose') {
+      title = 'YOU LOSE';
+      tagClass = 'lose-tag';
+    } else {
+      title = 'DRAW';
+      tagClass = 'draw-tag';
+    }
 
     var secret = game.secret;
     var digitHtml = '';
@@ -1625,8 +1758,8 @@
 
     var myText = game.won ? game.guesses.length : 'X';
     var oppText = battle.oppSolved ? battle.oppGuesses : 'X';
-    var myScoreClass = result === 'win' ? 'win-score' : (result === 'lose' ? 'lose-score' : '');
-    var oppScoreClass = result === 'lose' ? 'win-score' : (result === 'win' ? 'lose-score' : '');
+    var myScoreClass = result === 'win' ? 'win-score' : result === 'lose' ? 'lose-score' : '';
+    var oppScoreClass = result === 'lose' ? 'win-score' : result === 'win' ? 'lose-score' : '';
 
     var sessionScoreHtml = '';
     if (battle.score) {
@@ -1637,42 +1770,64 @@
         '<div class="session-score-modal">' +
         '<div class="session-score-modal-item">' +
         '<div class="session-score-modal-label">YOU</div>' +
-        '<div class="session-score-modal-value">' + sMyScore + '</div>' +
+        '<div class="session-score-modal-value">' +
+        sMyScore +
+        '</div>' +
         '</div>' +
         '<div class="session-score-modal-sep">—</div>' +
         '<div class="session-score-modal-item">' +
         '<div class="session-score-modal-label">DRAWS</div>' +
-        '<div class="session-score-modal-value">' + sDraws + '</div>' +
+        '<div class="session-score-modal-value">' +
+        sDraws +
+        '</div>' +
         '</div>' +
         '<div class="session-score-modal-sep">—</div>' +
         '<div class="session-score-modal-item">' +
         '<div class="session-score-modal-label">OPP</div>' +
-        '<div class="session-score-modal-value">' + sOppScore + '</div>' +
+        '<div class="session-score-modal-value">' +
+        sOppScore +
+        '</div>' +
         '</div>' +
         '</div>';
     }
 
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">' + title + '</div>' +
-      '<div style="text-align:center"><span class="battle-result-tag ' + tagClass + '">' +
-      'Room: ' + battle.roomCode + '</span></div>' +
-      '<div class="result-number">' + digitHtml + '</div>' +
-      '<div class="battle-scores">' +
-      '<div class="battle-score-player">' +
-      '<div class="score-label">You</div>' +
-      '<div class="score-val ' + myScoreClass + '">' + myText + '</div>' +
-      '</div>' +
-      '<div class="battle-score-player">' +
-      '<div class="score-label">Opponent</div>' +
-      '<div class="score-val ' + oppScoreClass + '">' + oppText + '</div>' +
-      '</div>' +
-      '</div>' +
-      sessionScoreHtml +
-      '<button class="modal-btn btn-new" onclick="playAgain()">Play Again</button>' +
-      '<button class="modal-btn btn-close" onclick="backToBattleLobby()">Leave Room</button>'
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">' +
+        title +
+        '</div>' +
+        '<div style="text-align:center"><span class="battle-result-tag ' +
+        tagClass +
+        '">' +
+        'Room: ' +
+        battle.roomCode +
+        '</span></div>' +
+        '<div class="result-number">' +
+        digitHtml +
+        '</div>' +
+        '<div class="battle-scores">' +
+        '<div class="battle-score-player">' +
+        '<div class="score-label">You</div>' +
+        '<div class="score-val ' +
+        myScoreClass +
+        '">' +
+        myText +
+        '</div>' +
+        '</div>' +
+        '<div class="battle-score-player">' +
+        '<div class="score-label">Opponent</div>' +
+        '<div class="score-val ' +
+        oppScoreClass +
+        '">' +
+        oppText +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        sessionScoreHtml +
+        '<button class="modal-btn btn-new" onclick="playAgain()">Play Again</button>' +
+        '<button class="modal-btn btn-close" onclick="backToBattleLobby()">Leave Room</button>'
     );
   }
 
@@ -1687,47 +1842,65 @@
       var hl = game.won && game.guesses.length === i + 1 ? ' highlight' : '';
       distHtml +=
         '<div class="dist-row">' +
-        '<span>' + (i + 1) + '</span>' +
-        '<div class="dist-bar' + hl + '" style="width:' + w + '%">' + stats.distribution[i] + '</div>' +
+        '<span>' +
+        (i + 1) +
+        '</span>' +
+        '<div class="dist-bar' +
+        hl +
+        '" style="width:' +
+        w +
+        '%">' +
+        stats.distribution[i] +
+        '</div>' +
         '</div>';
     }
 
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">Statistics</div>' +
-      '<div class="stat-row">' +
-      '<div class="stat-item"><div class="stat-val">' + stats.gamesPlayed + '</div><div class="stat-label">Played</div></div>' +
-      '<div class="stat-item"><div class="stat-val">' + pct + '</div><div class="stat-label">Win %</div></div>' +
-      '<div class="stat-item"><div class="stat-val">' + stats.currentStreak + '</div><div class="stat-label">Current<br>Streak</div></div>' +
-      '<div class="stat-item"><div class="stat-val">' + stats.maxStreak + '</div><div class="stat-label">Max<br>Streak</div></div>' +
-      '</div>' +
-      '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
-      '<div class="modal-section"><h3>Guess Distribution</h3>' + distHtml + '</div>' +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">Statistics</div>' +
+        '<div class="stat-row">' +
+        '<div class="stat-item"><div class="stat-val">' +
+        stats.gamesPlayed +
+        '</div><div class="stat-label">Played</div></div>' +
+        '<div class="stat-item"><div class="stat-val">' +
+        pct +
+        '</div><div class="stat-label">Win %</div></div>' +
+        '<div class="stat-item"><div class="stat-val">' +
+        stats.currentStreak +
+        '</div><div class="stat-label">Current<br>Streak</div></div>' +
+        '<div class="stat-item"><div class="stat-val">' +
+        stats.maxStreak +
+        '</div><div class="stat-label">Max<br>Streak</div></div>' +
+        '</div>' +
+        '<div style="border-top:1px solid var(--header-border);margin:12px 0"></div>' +
+        '<div class="modal-section"><h3>Guess Distribution</h3>' +
+        distHtml +
+        '</div>' +
+        '<button class="modal-btn btn-close" onclick="closeModal()">Close</button>'
     );
   }
 
   function showFirebaseSetup() {
     openModal(
       '<button class="modal-close" onclick="closeModal()">' +
-      '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
-      '</button>' +
-      '<div class="modal-title">Setup Required</div>' +
-      '<div class="modal-section">' +
-      '<p>Battle Mode needs Firebase (free) for real-time multiplayer.</p>' +
-      '<p style="margin-top:12px"><strong>One-time setup:</strong></p>' +
-      '<p style="margin-top:8px">1. Go to <strong>console.firebase.google.com</strong></p>' +
-      '<p>2. Create a new project (disable Analytics)</p>' +
-      '<p>3. Click <strong>Build → Realtime Database → Create Database</strong></p>' +
-      '<p>4. Choose any location, start in <strong>Test mode</strong></p>' +
-      '<p>5. Go to <strong>Project Settings</strong> (gear icon)</p>' +
-      '<p>6. Under "Your apps", click the web icon (&lt;/&gt;)</p>' +
-      '<p>7. Register an app name, copy the <strong>firebaseConfig</strong> object</p>' +
-      '<p>8. Paste those values into the top of <strong>game.js</strong></p>' +
-      '</div>' +
-      '<button class="modal-btn btn-close" onclick="closeModal()">Got it</button>'
+        '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+        '</button>' +
+        '<div class="modal-title">Setup Required</div>' +
+        '<div class="modal-section">' +
+        '<p>Battle Mode needs Firebase (free) for real-time multiplayer.</p>' +
+        '<p style="margin-top:12px"><strong>One-time setup:</strong></p>' +
+        '<p style="margin-top:8px">1. Go to <strong>console.firebase.google.com</strong></p>' +
+        '<p>2. Create a new project (disable Analytics)</p>' +
+        '<p>3. Click <strong>Build → Realtime Database → Create Database</strong></p>' +
+        '<p>4. Choose any location, start in <strong>Test mode</strong></p>' +
+        '<p>5. Go to <strong>Project Settings</strong> (gear icon)</p>' +
+        '<p>6. Under "Your apps", click the web icon (&lt;/&gt;)</p>' +
+        '<p>7. Register an app name, copy the <strong>firebaseConfig</strong> object</p>' +
+        '<p>8. Paste those values into the top of <strong>game.js</strong></p>' +
+        '</div>' +
+        '<button class="modal-btn btn-close" onclick="closeModal()">Got it</button>'
     );
   }
 
@@ -1737,7 +1910,9 @@
   function generateShareText() {
     var num = game.mode === 'daily' ? '#' + game.puzzleNum : '(Practice)';
     var unlimited = game.mode === 'practice' && dom.unlimitedToggle.checked;
-    var result = game.won ? game.guesses.length + (unlimited ? '' : '/' + MAX_GUESSES) : 'X/' + MAX_GUESSES;
+    var result = game.won
+      ? game.guesses.length + (unlimited ? '' : '/' + MAX_GUESSES)
+      : 'X/' + MAX_GUESSES;
     var grid = '';
     game.guesses.forEach(function (g) {
       var i;
@@ -1752,7 +1927,7 @@
   function shareResult() {
     var text = generateShareText();
     if (navigator.share) {
-      navigator.share({ text: text }).catch(function () { });
+      navigator.share({ text: text }).catch(function () {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(function () {
         showToast('Copied to clipboard');
@@ -1781,9 +1956,7 @@
       var target = document.getElementById('countdown-timer');
       if (target) {
         target.textContent =
-          (h < 10 ? '0' : '') + h + ':' +
-          (m < 10 ? '0' : '') + m + ':' +
-          (s < 10 ? '0' : '') + s;
+          (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
       }
     }
 
@@ -1808,11 +1981,15 @@
     try {
       var s = JSON.parse(localStorage.getItem(storageKey('nurdle_stats')));
       if (s && s.distribution) return s;
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      /* ignore */
+    }
     return {
-      gamesPlayed: 0, gamesWon: 0,
-      currentStreak: 0, maxStreak: 0,
-      distribution: [0, 0, 0, 0, 0, 0]
+      gamesPlayed: 0,
+      gamesWon: 0,
+      currentStreak: 0,
+      maxStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0],
     };
   }
 
@@ -1846,7 +2023,7 @@
       keyStates: game.keyStates,
       startTime: game.startTime,
       mode: 'daily',
-      currentGuess: game.currentGuess
+      currentGuess: game.currentGuess,
     };
     localStorage.setItem(storageKey('nurdle_daily'), JSON.stringify(data));
     saveToCloud('daily', data);
@@ -1855,7 +2032,9 @@
   function loadDaily() {
     try {
       return JSON.parse(localStorage.getItem(storageKey('nurdle_daily')));
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   }
 
   // ================================================================
@@ -1963,7 +2142,6 @@
       newGame('practice');
     }
   });
-
 
   // Load preferences
   dom.unlimitedToggle.checked = localStorage.getItem('nurdle_unlimited') === '1';

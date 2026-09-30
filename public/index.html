@@ -1,193 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Nurdle - A daily number guessing game. Guess the 3-digit number in 6 tries.">
-  <meta name="theme-color" content="#121213">
-  <title>Nurdle</title>
-  <link rel="icon" href="logo.png">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div id="app">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Nurdle - A daily number guessing game. Guess the 3-digit number in 6 tries."
+    />
+    <meta name="theme-color" content="#121213" />
+    <title>Nurdle</title>
+    <link rel="icon" href="logo.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
       <header>
-    <div class="header-left">
-      <button class="hdr-btn" id="helpBtn" title="How to Play">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
-          <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
-        </svg>
-      </button>
-    </div>
-    <div class="logo-container">
-      <img src="logo-black.png" alt="Nurdle" class="logo logo-light">
-      <img src="logo-white.png" alt="Nurdle" class="logo logo-dark">
-    </div>
-    <div class="header-right">
-      <button class="hdr-btn" id="settingsBtn" title="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
-          <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-        </svg>
-      </button>
-      <button class="hdr-btn" id="statsBtn" title="Statistics">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
-          <path d="M16,11V3H8v6H2v12h20V11H16z M10,5h4v14h-4V5z M4,11h4v8H4V11z M20,19h-4v-6h4V19z"/>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-    <nav class="mode-nav">
-      <button class="mode-btn active" data-mode="daily" id="dailyBtn">Daily</button>
-      <button class="mode-btn" data-mode="practice" id="practiceBtn">Practice</button>
-      <button class="mode-btn" data-mode="battle" id="battleBtn">Battle</button>
-    </nav>
-    <div id="practice-options" class="hidden">
-      <input type="checkbox" id="unlimitedToggle">
-      <input type="checkbox" id="duplicatesToggle">
-    </div>
-    <div id="battle-tracker" class="hidden">
-      <div class="tracker-player">
-        <div class="tracker-name">YOU</div>
-        <div class="tracker-dots" id="myProgress"></div>
-      </div>
-      <div class="tracker-vs">VS</div>
-      <div class="tracker-player">
-        <div class="tracker-name">OPPONENT</div>
-        <div class="tracker-dots" id="oppProgress"></div>
-      </div>
-    </div>
-
-    <main id="board-container">
-      <div id="board"></div>
-
-      <!-- ===== LANDING PAGES ===== -->
-      <div id="landing-guest" class="hidden">
-        <div class="landing-content">
-          <div class="landing-logo">
-            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
-            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
-          </div>
-          <p class="landing-tagline">Complete the puzzle in 6 tries</p>
-          <button class="lobby-btn create-btn" id="loginBtn">LOG IN</button>
-          <div class="lobby-divider"><span>or</span></div>
-          <button class="lobby-btn join-btn" id="guestPlayBtn">GUEST</button>
-        </div>
-      </div>
-
-      <div id="landing-welcome" class="hidden">
-        <div class="landing-content">
-          <div class="landing-logo">
-            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
-            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
-          </div>
-          <h2 class="landing-heading">Welcome back</h2>
-          <p class="landing-streak">Continue your <span id="streakCount" class="landing-streak-num">0</span> day streak</p>
-          <button class="lobby-btn create-btn" id="playDailyBtn">PLAY TODAY'S PUZZLE</button>
-        </div>
-      </div>
-
-      <div id="landing-continue" class="hidden">
-        <div class="landing-content">
-          <div class="landing-logo">
-            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
-            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
-          </div>
-          <h2 class="landing-heading">You're not done yet</h2>
-          <p class="landing-streak">Continue your puzzle, you have <span id="triesLeft" class="landing-streak-num">6</span> tries left</p>
-          <button class="lobby-btn create-btn" id="continueBtn">CONTINUE</button>
-        </div>
-      </div>
-
-      <div id="landing-won" class="hidden">
-        <div class="landing-content">
-          <div class="landing-logo">
-            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
-            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
-          </div>
-          <h2 class="landing-heading">Brilliant!</h2>
-          <p class="landing-streak">You cracked today's puzzle</p>
-          <button class="lobby-btn create-btn" id="admireWonBtn">ADMIRE PUZZLE</button>
-        </div>
-      </div>
-
-      <div id="landing-lost" class="hidden">
-        <div class="landing-content">
-          <div class="landing-logo">
-            <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light">
-            <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark">
-          </div>
-          <h2 class="landing-heading">Better luck tomorrow</h2>
-          <p class="landing-streak">The puzzle got the best of you today</p>
-          <button class="lobby-btn create-btn" id="admireLostBtn">VIEW PUZZLE</button>
-        </div>
-      </div>
-
-      <div id="battle-lobby" class="hidden">
-        <div class="lobby-content">
-          <div class="lobby-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <div class="header-left">
+          <button class="hdr-btn" id="helpBtn" title="How to Play">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 0 24 24"
+              width="24"
+              fill="currentColor"
+            >
+              <path
+                d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
+              />
             </svg>
+          </button>
+        </div>
+        <div class="logo-container">
+          <img src="logo-black.png" alt="Nurdle" class="logo logo-light" />
+          <img src="logo-white.png" alt="Nurdle" class="logo logo-dark" />
+        </div>
+        <div class="header-right">
+          <button class="hdr-btn" id="settingsBtn" title="Settings">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 0 24 24"
+              width="24"
+              fill="currentColor"
+            >
+              <path
+                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"
+              />
+            </svg>
+          </button>
+          <button class="hdr-btn" id="statsBtn" title="Statistics">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 0 24 24"
+              width="24"
+              fill="currentColor"
+            >
+              <path
+                d="M16,11V3H8v6H2v12h20V11H16z M10,5h4v14h-4V5z M4,11h4v8H4V11z M20,19h-4v-6h4V19z"
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <nav class="mode-nav">
+        <button class="mode-btn active" data-mode="daily" id="dailyBtn">Daily</button>
+        <button class="mode-btn" data-mode="practice" id="practiceBtn">Practice</button>
+        <button class="mode-btn" data-mode="battle" id="battleBtn">Battle</button>
+      </nav>
+      <div id="practice-options" class="hidden">
+        <input type="checkbox" id="unlimitedToggle" />
+        <input type="checkbox" id="duplicatesToggle" />
+      </div>
+      <div id="battle-tracker" class="hidden">
+        <div class="tracker-player">
+          <div class="tracker-name">YOU</div>
+          <div class="tracker-dots" id="myProgress"></div>
+        </div>
+        <div class="tracker-vs">VS</div>
+        <div class="tracker-player">
+          <div class="tracker-name">OPPONENT</div>
+          <div class="tracker-dots" id="oppProgress"></div>
+        </div>
+      </div>
+
+      <main id="board-container">
+        <div id="board"></div>
+
+        <!-- ===== LANDING PAGES ===== -->
+        <div id="landing-guest" class="hidden">
+          <div class="landing-content">
+            <div class="landing-logo">
+              <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light" />
+              <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark" />
+            </div>
+            <p class="landing-tagline">Complete the puzzle in 6 tries</p>
+            <button class="lobby-btn create-btn" id="loginBtn">LOG IN</button>
+            <div class="lobby-divider"><span>or</span></div>
+            <button class="lobby-btn join-btn" id="guestPlayBtn">GUEST</button>
           </div>
-          <h2 class="lobby-title">BATTLE MODE</h2>
-          <p class="lobby-subtitle">Race against a friend to solve the number</p>
-          <button class="lobby-btn create-btn" id="createRoomBtn">CREATE ROOM</button>
-          <div class="lobby-divider"><span>or</span></div>
-          <input type="text" id="roomCodeInput" class="room-code-input" placeholder="ROOM CODE" maxlength="5" autocomplete="off" spellcheck="false">
-          <button class="lobby-btn join-btn" id="joinRoomBtn">JOIN ROOM</button>
         </div>
-      </div>
 
-      <div id="battle-select-secret" class="hidden">
-        <div class="lobby-content">
-          <h2 class="lobby-title">YOUR NUMBER</h2>
-          <p class="lobby-subtitle" style="margin-bottom: 24px;">Pick a 3-digit number for your opponent to guess.</p>
-          <div class="result-number" id="selectNumberDisplay" style="margin-bottom: 24px;">
-            <div class="result-digit" style="border: 2px solid var(--border-empty); background: transparent; color: var(--text);"></div>
-            <div class="result-digit" style="border: 2px solid var(--border-empty); background: transparent; color: var(--text);"></div>
-            <div class="result-digit" style="border: 2px solid var(--border-empty); background: transparent; color: var(--text);"></div>
+        <div id="landing-welcome" class="hidden">
+          <div class="landing-content">
+            <div class="landing-logo">
+              <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light" />
+              <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark" />
+            </div>
+            <h2 class="landing-heading">Welcome back</h2>
+            <p class="landing-streak">
+              Continue your <span id="streakCount" class="landing-streak-num">0</span> day streak
+            </p>
+            <button class="lobby-btn create-btn" id="playDailyBtn">PLAY TODAY'S PUZZLE</button>
           </div>
-          <button class="lobby-btn create-btn" id="lockSecretBtn">LOCK IN NUMBER</button>
         </div>
-      </div>
 
-      <div id="battle-waiting" class="hidden">
-        <div class="waiting-content">
-          <h2 class="lobby-title">ROOM CREATED</h2>
-          <div class="room-code-display" id="roomCodeDisplay"></div>
-          <p class="lobby-subtitle">Share this code with your opponent</p>
-          <p id="roomRulesDisplay" class="room-rules-text"></p>
-          <button class="lobby-btn copy-btn" id="copyCodeBtn">COPY CODE</button>
-          <p class="waiting-pulse">Waiting for opponent</p>
-          <button class="lobby-btn cancel-btn" id="cancelRoomBtn">CANCEL</button>
+        <div id="landing-continue" class="hidden">
+          <div class="landing-content">
+            <div class="landing-logo">
+              <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light" />
+              <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark" />
+            </div>
+            <h2 class="landing-heading">You're not done yet</h2>
+            <p class="landing-streak">
+              Continue your puzzle, you have
+              <span id="triesLeft" class="landing-streak-num">6</span> tries left
+            </p>
+            <button class="lobby-btn create-btn" id="continueBtn">CONTINUE</button>
+          </div>
         </div>
-      </div>
 
-      <div id="battle-countdown" class="hidden">
-        <div class="countdown-big" id="countdownBig">3</div>
-      </div>
-    </main>
+        <div id="landing-won" class="hidden">
+          <div class="landing-content">
+            <div class="landing-logo">
+              <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light" />
+              <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark" />
+            </div>
+            <h2 class="landing-heading">Brilliant!</h2>
+            <p class="landing-streak">You cracked today's puzzle</p>
+            <button class="lobby-btn create-btn" id="admireWonBtn">ADMIRE PUZZLE</button>
+          </div>
+        </div>
 
-    <footer id="keypad-container">
-      <div id="keypad"></div>
-    </footer>
+        <div id="landing-lost" class="hidden">
+          <div class="landing-content">
+            <div class="landing-logo">
+              <img src="logo-black.png" alt="Nurdle" class="landing-logo-img logo-light" />
+              <img src="logo-white.png" alt="Nurdle" class="landing-logo-img logo-dark" />
+            </div>
+            <h2 class="landing-heading">Better luck tomorrow</h2>
+            <p class="landing-streak">The puzzle got the best of you today</p>
+            <button class="lobby-btn create-btn" id="admireLostBtn">VIEW PUZZLE</button>
+          </div>
+        </div>
 
-    <div id="toast-container"></div>
-    <div id="confetti"></div>
-    <div id="overlay" class="hidden"></div>
-    <div id="modal" class="hidden"></div>
-  </div>
+        <div id="battle-lobby" class="hidden">
+          <div class="lobby-content">
+            <div class="lobby-icon">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <h2 class="lobby-title">BATTLE MODE</h2>
+            <p class="lobby-subtitle">Race against a friend to solve the number</p>
+            <button class="lobby-btn create-btn" id="createRoomBtn">CREATE ROOM</button>
+            <div class="lobby-divider"><span>or</span></div>
+            <input
+              type="text"
+              id="roomCodeInput"
+              class="room-code-input"
+              placeholder="ROOM CODE"
+              maxlength="5"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="lobby-btn join-btn" id="joinRoomBtn">JOIN ROOM</button>
+          </div>
+        </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
-  <script src="game.js"></script>
-</body>
+        <div id="battle-select-secret" class="hidden">
+          <div class="lobby-content">
+            <h2 class="lobby-title">YOUR NUMBER</h2>
+            <p class="lobby-subtitle" style="margin-bottom: 24px">
+              Pick a 3-digit number for your opponent to guess.
+            </p>
+            <div class="result-number" id="selectNumberDisplay" style="margin-bottom: 24px">
+              <div
+                class="result-digit"
+                style="
+                  border: 2px solid var(--border-empty);
+                  background: transparent;
+                  color: var(--text);
+                "
+              ></div>
+              <div
+                class="result-digit"
+                style="
+                  border: 2px solid var(--border-empty);
+                  background: transparent;
+                  color: var(--text);
+                "
+              ></div>
+              <div
+                class="result-digit"
+                style="
+                  border: 2px solid var(--border-empty);
+                  background: transparent;
+                  color: var(--text);
+                "
+              ></div>
+            </div>
+            <button class="lobby-btn create-btn" id="lockSecretBtn">LOCK IN NUMBER</button>
+          </div>
+        </div>
+
+        <div id="battle-waiting" class="hidden">
+          <div class="waiting-content">
+            <h2 class="lobby-title">ROOM CREATED</h2>
+            <div class="room-code-display" id="roomCodeDisplay"></div>
+            <p class="lobby-subtitle">Share this code with your opponent</p>
+            <p id="roomRulesDisplay" class="room-rules-text"></p>
+            <button class="lobby-btn copy-btn" id="copyCodeBtn">COPY CODE</button>
+            <p class="waiting-pulse">Waiting for opponent</p>
+            <button class="lobby-btn cancel-btn" id="cancelRoomBtn">CANCEL</button>
+          </div>
+        </div>
+
+        <div id="battle-countdown" class="hidden">
+          <div class="countdown-big" id="countdownBig">3</div>
+        </div>
+      </main>
+
+      <footer id="keypad-container">
+        <div id="keypad"></div>
+      </footer>
+
+      <div id="toast-container"></div>
+      <div id="confetti"></div>
+      <div id="overlay" class="hidden"></div>
+      <div id="modal" class="hidden"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+    <script src="game.js"></script>
+  </body>
 </html>

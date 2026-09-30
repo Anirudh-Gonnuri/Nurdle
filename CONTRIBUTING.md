@@ -2,11 +2,11 @@
 
 ## Branching model
 
-| Branch            | Purpose                                              | Deploys to            |
-| ----------------- | ---------------------------------------------------- | --------------------- |
-| `main`            | Production. Always releasable.                       | Production            |
-| `dev`             | Integration. Features land here first.               | Preview / staging     |
-| `<type>/<topic>`  | Short-lived work branches, cut from `dev`.           | Per-PR preview        |
+| Branch           | Purpose                                    | Deploys to        |
+| ---------------- | ------------------------------------------ | ----------------- |
+| `main`           | Production. Always releasable.             | Production        |
+| `dev`            | Integration. Features land here first.     | Preview / staging |
+| `<type>/<topic>` | Short-lived work branches, cut from `dev`. | Per-PR preview    |
 
 Rules:
 
