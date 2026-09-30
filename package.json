@@ -1,0 +1,35 @@
+{
+  "name": "nurdle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A daily number-guessing game inspired by Wordle.",
+  "homepage": "https://nurdle.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anirudh-Gonnuri/Nurdle.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "serve public --listen 3000 --no-clipboard",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.11.0",
+    "globals": "17.12.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.9",
+    "serve": "14.2.6"
+  }
+}

@@ -276,7 +276,8 @@
   }
 }
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
 }
@@ -439,7 +440,9 @@ header h1 {
   height: 10px;
   border-radius: 50%;
   background: var(--border-empty);
-  transition: background 0.3s, transform 0.3s;
+  transition:
+    background 0.3s,
+    transform 0.3s;
 }
 
 .tracker-dot.used {
@@ -539,7 +542,6 @@ header h1 {
   animation: cellPop 0.1s ease-in-out;
 }
 
-
 .cell.submitted {
   border-color: transparent;
   color: var(--tile-text-submitted);
@@ -562,13 +564,21 @@ header h1 {
 }
 
 @keyframes flipIn {
-  0% { transform: rotateX(0deg); }
-  100% { transform: rotateX(-90deg); }
+  0% {
+    transform: rotateX(0deg);
+  }
+  100% {
+    transform: rotateX(-90deg);
+  }
 }
 
 @keyframes flipOut {
-  0% { transform: rotateX(-90deg); }
-  100% { transform: rotateX(0deg); }
+  0% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
 }
 
 /* ===== FEEDBACK DOTS ===== */
@@ -596,7 +606,9 @@ header h1 {
   border-radius: 50%;
   background: var(--border-empty);
   transform: scale(0);
-  transition: transform 0.25s ease, background 0.25s;
+  transition:
+    transform 0.25s ease,
+    background 0.25s;
 }
 
 .dot.revealed {
@@ -868,7 +880,9 @@ header h1 {
   color: var(--bg);
   font-size: 14px;
   font-weight: 700;
-  animation: toastIn 0.15s ease, toastOut 0.15s ease 1.4s forwards;
+  animation:
+    toastIn 0.15s ease,
+    toastOut 0.15s ease 1.4s forwards;
   pointer-events: none;
   white-space: nowrap;
   font-family: inherit;
@@ -979,9 +993,15 @@ header h1 {
   flex-shrink: 0;
 }
 
-.help-dot.g { background: var(--green); }
-.help-dot.y { background: var(--yellow); }
-.help-dot.a { background: var(--absent); }
+.help-dot.g {
+  background: var(--green);
+}
+.help-dot.y {
+  background: var(--yellow);
+}
+.help-dot.a {
+  background: var(--absent);
+}
 
 .help-example span {
   font-size: 13px;
@@ -1078,9 +1098,18 @@ header h1 {
   font-weight: 700;
 }
 
-.result-digit.rg { background: var(--green); color: #fff; }
-.result-digit.rr { background: var(--absent); color: #fff; }
-.result-digit.rb { background: var(--green); color: #fff; }
+.result-digit.rg {
+  background: var(--green);
+  color: #fff;
+}
+.result-digit.rr {
+  background: var(--absent);
+  color: #fff;
+}
+.result-digit.rb {
+  background: var(--green);
+  color: #fff;
+}
 
 .countdown {
   text-align: center;
@@ -1110,9 +1139,18 @@ header h1 {
   margin: 8px auto;
 }
 
-.battle-result-tag.win-tag { background: rgba(106,170,100,0.15); color: var(--green); }
-.battle-result-tag.lose-tag { background: rgba(231,76,60,0.15); color: var(--red); }
-.battle-result-tag.draw-tag { background: rgba(201,180,88,0.15); color: var(--yellow); }
+.battle-result-tag.win-tag {
+  background: rgba(106, 170, 100, 0.15);
+  color: var(--green);
+}
+.battle-result-tag.lose-tag {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--red);
+}
+.battle-result-tag.draw-tag {
+  background: rgba(201, 180, 88, 0.15);
+  color: var(--yellow);
+}
 
 .battle-scores {
   display: flex;
@@ -1134,8 +1172,12 @@ header h1 {
   font-weight: 400;
 }
 
-.battle-score-player .score-val.win-score { color: var(--green); }
-.battle-score-player .score-val.lose-score { color: var(--red); }
+.battle-score-player .score-val.win-score {
+  color: var(--green);
+}
+.battle-score-player .score-val.lose-score {
+  color: var(--red);
+}
 
 /* ===== BUTTONS ===== */
 
@@ -1221,7 +1263,9 @@ header h1 {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .auth-tab.active {
@@ -1302,104 +1346,231 @@ header h1 {
   animation: confettiFall linear forwards;
 }
 
-.confetti-piece.rect { border-radius: 1px; }
-.confetti-piece.circle { border-radius: 50%; }
+.confetti-piece.rect {
+  border-radius: 1px;
+}
+.confetti-piece.circle {
+  border-radius: 50%;
+}
 
 /* ===== ANIMATIONS ===== */
 
 @keyframes cellPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10% { transform: translateX(-5px); }
-  20% { transform: translateX(5px); }
-  30% { transform: translateX(-5px); }
-  40% { transform: translateX(5px); }
-  50% { transform: translateX(-3px); }
-  60% { transform: translateX(3px); }
-  70% { transform: translateX(-2px); }
-  80% { transform: translateX(2px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-5px);
+  }
+  20% {
+    transform: translateX(5px);
+  }
+  30% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
 }
 
 @keyframes bounce {
-  0%, 20% { transform: translateY(0); }
-  40% { transform: translateY(-30px); }
-  50% { transform: translateY(5px); }
-  60% { transform: translateY(-15px); }
-  80% { transform: translateY(2px); }
-  100% { transform: translateY(0); }
+  0%,
+  20% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-30px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  60% {
+    transform: translateY(-15px);
+  }
+  80% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes toastOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: translate(-50%, -48%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 @keyframes longPressGlow {
-  0% { box-shadow: inset 0 0 0 0 rgba(106, 170, 100, 0.3); }
-  100% { box-shadow: inset 0 0 0 30px rgba(106, 170, 100, 0.3); }
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(106, 170, 100, 0.3);
+  }
+  100% {
+    box-shadow: inset 0 0 0 30px rgba(106, 170, 100, 0.3);
+  }
 }
 
 @keyframes confettiFall {
-  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateY(105vh) rotate(var(--rot, 720deg)) scale(0.3); opacity: 0; }
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(var(--rot, 720deg)) scale(0.3);
+    opacity: 0;
+  }
 }
 
 @keyframes dotReveal {
-  0% { transform: scale(0); }
-  70% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes countdownPop {
-  0% { transform: scale(0.3); opacity: 0; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ===== RESPONSIVE ===== */
 
 @media (max-height: 680px) {
-  .cell { min-width: 48px; min-height: 48px; font-size: 22px; }
-  .key { height: 48px; font-size: 18px; }
-  header h1 { font-size: 28px; }
-  .mode-btn { padding: 5px 12px; font-size: 11px; }
-  .dot { width: 12px; height: 12px; }
-  #battle-tracker { padding: 6px 12px; }
-  .tracker-dot { width: 9px; height: 9px; }
+  .cell {
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 22px;
+  }
+  .key {
+    height: 48px;
+    font-size: 18px;
+  }
+  header h1 {
+    font-size: 28px;
+  }
+  .mode-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+  }
+  #battle-tracker {
+    padding: 6px 12px;
+  }
+  .tracker-dot {
+    width: 9px;
+    height: 9px;
+  }
 }
 
 @media (max-height: 580px) {
-  .cell { min-width: 42px; min-height: 42px; font-size: 20px; }
-  .key { height: 42px; font-size: 16px; }
-  #board { gap: 4px; }
-  .row .cells { gap: 4px; }
-  #keypad { gap: 4px; }
+  .cell {
+    min-width: 42px;
+    min-height: 42px;
+    font-size: 20px;
+  }
+  .key {
+    height: 42px;
+    font-size: 16px;
+  }
+  #board {
+    gap: 4px;
+  }
+  .row .cells {
+    gap: 4px;
+  }
+  #keypad {
+    gap: 4px;
+  }
 }
 
 /* ===== DESKTOP ===== */
