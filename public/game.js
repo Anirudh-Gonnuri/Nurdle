@@ -1047,7 +1047,7 @@
           battleResultShown = true;
           showToast('Opponent disconnected');
           setTimeout(function () {
-            backToBattleLobby();
+            window.backToBattleLobby();
           }, 1500);
         }
         return;
@@ -1164,7 +1164,7 @@
   window.playAgain = function () {
     if (!battle.roomRef) {
       closeModal();
-      backToBattleLobby();
+      window.backToBattleLobby();
       return;
     }
     battle.roomRef.child('rematch/' + battle.mySlot).set(true);
